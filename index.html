@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#f1f5f9" />
+    <meta
+      name="description"
+      content="Aplicación de tareas móvil-first, personalizable y segura."
+    />
+    <title>Tareasy</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-theme="light">
+    <header class="topbar" aria-label="Barra superior de navegación">
+      <div class="topbar-left">
+        <div class="brand-mark">✓</div>
+        <span class="brand-name">Tareasy</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button
+          id="toggle-sidebar"
+          class="icon-button mobile-menu-button"
+          type="button"
+          aria-label="Abrir menú lateral"
+          aria-controls="task-sidebar"
+          aria-expanded="false"
+        >
+          ☰
+        </button>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema">
+          ☀️
+        </button>
+        <button id="settings-button" class="icon-button settings-button" type="button" aria-label="Abrir ajustes">
+          ⚙️
+        </button>
+      </div>
+    </header>
+
+    <div id="settings-overlay" class="settings-overlay hidden" aria-hidden="true"></div>
+
+    <aside id="settings-panel" class="settings-panel hidden" aria-label="Ajustes" aria-modal="true" role="dialog">
+      <div class="settings-header">
+        <h3>Ajustes</h3>
+        <button id="close-settings" class="icon-button small-icon" type="button" aria-label="Cerrar ajustes">✕</button>
+      </div>
+
+      <div class="settings-section">
+        <h4>Cuenta</h4>
+
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Mi cuenta">
+          <span>Mi cuenta</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Administrar perfil">
+          <span>Administrar perfil</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Google Drive">
+          <span>Google Drive</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="iCloud">
+          <span>iCloud</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Sincronizar manual">
+          <span>Sincronizar manual</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <h4>Personalización</h4>
+
+        <div class="settings-item-group">
+          <button class="settings-option" type="button" data-setting="estilo">
+            <span>Estilo</span>
+            <span class="settings-value">Minimal</span>
+          </button>
+          <div class="settings-menu hidden" aria-label="Opciones de estilo">
+            <button type="button" class="settings-menu-item">Minimal</button>
+            <button type="button" class="settings-menu-item">Compact</button>
+            <button type="button" class="settings-menu-item">Premium</button>
+          </div>
+        </div>
+
+        <div class="settings-item-group">
+          <button class="settings-option" type="button" data-setting="vista">
+            <span>Vista</span>
+            <span class="settings-value">Lista compacta</span>
+          </button>
+          <div class="settings-menu hidden" aria-label="Opciones de vista">
+            <button type="button" class="settings-menu-item">Lista compacta</button>
+            <button type="button" class="settings-menu-item">Lista amplia</button>
+            <button type="button" class="settings-menu-item">Vista por tablero</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h4>Temas</h4>
+
+        <div class="settings-item-group">
+          <button class="settings-option" type="button" data-setting="modo">
+            <span>Modo</span>
+            <span class="settings-value">Claro / Oscuro</span>
+          </button>
+          <div class="settings-menu hidden" aria-label="Opciones de modo">
+            <button type="button" class="settings-menu-item">Claro</button>
+            <button type="button" class="settings-menu-item">Oscuro</button>
+            <button type="button" class="settings-menu-item">Sistema</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h4>Soporte</h4>
+
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Centro de ayuda">
+          <span>Centro de ayuda</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Preguntas frecuentes">
+          <span>Preguntas frecuentes</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Enviar mensaje">
+          <span>Enviar mensaje</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Email">
+          <span>Email</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Chat">
+          <span>Chat</span><span class="settings-arrow" aria-hidden="true">›</span>
+        </button>
+      </div>
+
+      <div id="settings-detail" class="settings-detail hidden" aria-live="polite" tabindex="-1">
+        <button id="settings-back" class="settings-back" type="button">‹ Volver a Ajustes</button>
+        <h3 id="settings-detail-title"></h3>
+        <p id="settings-detail-copy"></p>
+        <div id="settings-detail-actions" class="settings-detail-actions"></div>
+      </div>
+    </aside>
+
+    <div class="app-shell">
+      <aside id="task-sidebar" class="sidebar" aria-label="Navegación lateral">
+        <nav class="side-nav" aria-label="Filtros de tareas">
+          <div class="nav-group">
+            <button class="nav-item active" type="button" data-filter="all">Todas</button>
+            <button class="nav-item" type="button" data-filter="active">Pendientes</button>
+            <button class="nav-item" type="button" data-filter="completed">Completadas</button>
+          </div>
+
+          <div class="list-section">
+            <div class="section-header">
+              <span>Listas</span>
+              <button id="add-list-button" class="mini-button" type="button" aria-label="Crear lista">＋</button>
+            </div>
+            <div id="list-list" class="list-list" aria-live="polite"></div>
+
+            <form id="list-form" class="list-form hidden" autocomplete="off">
+              <label class="sr-only" for="list-input">Nombre de la lista</label>
+              <input id="list-input" name="list" type="text" maxlength="40" placeholder="Nueva lista" />
+              <div class="list-form-actions">
+                <button type="submit" class="primary-button small">Guardar</button>
+                <button type="button" class="secondary-button small" id="cancel-list-button">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="main-panel" role="main">
+        <div class="main-heading">
+          <div class="heading-row">
+            <div>
+              <p class="eyebrow">Hoy</p>
+              <h1 id="view-title">Mis tareas</h1>
+            </div>
+            <label class="sort-control">
+              <span>Ordenar</span>
+              <select id="task-sort-select" aria-label="Ordenar tareas">
+                <option value="created-desc">Última tarea agregada</option>
+                <option value="due-asc">Fecha: menor a mayor</option>
+                <option value="due-desc">Fecha: mayor a menor</option>
+                <option value="name-asc">Nombre: A-Z</option>
+                <option value="name-desc">Nombre: Z-A</option>
+                <option value="manual">Orden manual</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <section class="composer" aria-label="Crear o editar tarea">
+          <form id="task-form" class="task-form" data-mode="create">
+            <div class="task-form-header">
+              <label class="sr-only" for="task-input">Descripción de la tarea</label>
+              <input
+                id="task-input"
+                name="task"
+                type="text"
+                maxlength="180"
+                autocomplete="off"
+                placeholder="Añadir una tarea..."
+              />
+              <button type="submit" class="primary-button">Guardar</button>
+            </div>
+
+            <div class="task-form-meta">
+              <label>
+                <span class="meta-icon" aria-hidden="true">📅</span>
+                <span class="sr-only">Fecha de vencimiento</span>
+                <input id="task-due-date" name="dueDate" type="date" />
+              </label>
+
+              <label>
+                <span class="meta-icon" aria-hidden="true">⚑</span>
+                <span class="sr-only">Prioridad</span>
+                <select id="task-priority" name="priority">
+                  <option value="baja">Baja</option>
+                  <option value="media" selected>Media</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </label>
+
+              <label>
+                <span class="meta-icon" aria-hidden="true">☷</span>
+                <span class="sr-only">Lista</span>
+                <select id="task-list-select" name="list"></select>
+              </label>
+            </div>
+
+            <button type="button" id="cancel-edit-task" class="secondary-button hidden">Cancelar edición</button>
+          </form>
+        </section>
+
+        <section class="tasks-panel" aria-live="polite" aria-label="Lista de tareas">
+          <ul id="task-list" class="task-list"></ul>
+        </section>
+      </main>
+    </div>
+
+    <div id="task-detail-overlay" class="settings-overlay hidden" aria-hidden="true"></div>
+    <section id="task-detail-panel" class="task-detail-panel hidden" role="dialog" aria-modal="true" aria-labelledby="task-detail-title">
+      <div class="settings-header">
+        <div>
+          <span class="eyebrow">Detalle</span>
+          <h3 id="task-detail-title">Tarea</h3>
+        </div>
+        <button id="close-task-detail" class="icon-button small-icon" type="button" aria-label="Cerrar detalle">✕</button>
+      </div>
+      <div class="subtask-builder">
+        <div class="subtask-input-row">
+          <label class="sr-only" for="subtask-input">Añadir subtarea</label>
+          <input id="subtask-input" type="text" maxlength="120" placeholder="Añadir subtarea..." />
+          <button type="button" id="add-subtask-button" class="secondary-button">Añadir</button>
+        </div>
+        <ul id="subtask-list" class="subtask-list" aria-live="polite"></ul>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Navegación inferior">
+      <button class="bottom-nav-item active" type="button" data-filter="all">Todas</button>
+      <button class="bottom-nav-item" type="button" data-filter="active">Pendientes</button>
+      <button class="bottom-nav-item" type="button" data-filter="completed">Hechas</button>
+    </nav>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
