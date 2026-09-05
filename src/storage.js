@@ -130,6 +130,7 @@ function normalizeTask(task, fallbackListId = 'inbox') {
     completed: Boolean(task.completed),
     createdAt: typeof task.createdAt === 'string' ? task.createdAt : new Date().toISOString(),
     dueDate: typeof task.dueDate === 'string' ? task.dueDate : '',
+    dueTime: typeof task.dueTime === 'string' ? task.dueTime : '',
     priority,
     listId,
     subtasks: Array.isArray(task.subtasks)

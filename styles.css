@@ -897,6 +897,121 @@ body[data-theme='dark'] .bottom-nav {
   width: 100%;
   min-width: 0;
   text-align: center;
+  outline: none;
+  box-shadow: none;
+  border: 0;
+  background: transparent;
+}
+
+.quick-language {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(176, 192, 255, 0.34);
+  box-shadow: 0 4px 12px rgba(5, 12, 45, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.quick-language:hover,
+.quick-language:focus-within {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #7ce9ff;
+  box-shadow: 0 0 0 3px rgba(124, 233, 255, 0.16), 0 8px 20px rgba(5, 12, 45, 0.3);
+}
+
+.task-item.due-tomorrow {
+  background: rgba(44, 126, 111, 0.1);
+  border-color: rgba(70, 214, 178, 0.3);
+}
+
+.task-item.due-today {
+  background: rgba(70, 214, 178, 0.17);
+  border-color: rgba(70, 214, 178, 0.62);
+  box-shadow: 0 0 0 1px rgba(70, 214, 178, 0.14), 0 6px 18px rgba(27, 124, 104, 0.12);
+}
+
+body[data-theme='dark'] .task-item.due-tomorrow {
+  background: rgba(154, 119, 43, 0.2);
+  border-color: rgba(214, 174, 76, 0.38);
+}
+
+body[data-theme='dark'] .task-item.due-today {
+  background: rgba(24, 106, 96, 0.4);
+  border-color: rgba(70, 214, 178, 0.72);
+  box-shadow: 0 0 0 1px rgba(70, 214, 178, 0.2), 0 8px 22px rgba(18, 104, 91, 0.24);
+}
+
+.quick-language {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(5, 12, 45, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.quick-language:hover,
+.quick-language:focus-within {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #7ce9ff;
+  box-shadow: 0 0 0 3px rgba(124, 233, 255, 0.16), 0 8px 20px rgba(5, 12, 45, 0.3);
+}
+
+.task-item.due-tomorrow {
+  background: rgba(44, 126, 111, 0.1);
+  border-color: rgba(70, 214, 178, 0.3);
+}
+
+.task-item.due-today {
+  background: rgba(70, 214, 178, 0.17);
+  border-color: rgba(70, 214, 178, 0.62);
+  box-shadow: 0 0 0 1px rgba(70, 214, 178, 0.14), 0 6px 18px rgba(27, 124, 104, 0.12);
+}
+
+body[data-theme='dark'] .task-item.due-tomorrow {
+  background: rgba(29, 83, 82, 0.32);
+  border-color: rgba(54, 234, 216, 0.3);
+}
+
+body[data-theme='dark'] .task-item.due-today {
+  background: rgba(24, 106, 96, 0.4);
+  border-color: rgba(70, 214, 178, 0.72);
+  box-shadow: 0 0 0 1px rgba(70, 214, 178, 0.2), 0 8px 22px rgba(18, 104, 91, 0.24);
+}
+
+.task-item.due-today .task-badge.due-date,
+.task-item.due-tomorrow .task-badge.due-date {
+  color: #0f766e;
+  background: rgba(167, 243, 208, 0.5);
+}
+
+body[data-theme='dark'] .task-item.due-today .task-badge.due-date,
+body[data-theme='dark'] .task-item.due-tomorrow .task-badge.due-date {
+  color: #b8fff0;
+  background: rgba(20, 121, 107, 0.5);
+}
+
+body[data-theme='dark'] .task-item.due-tomorrow .task-badge.due-date {
+  color: #ffe8a6;
+  background: rgba(154, 119, 43, 0.42);
+}
+
+/* Final date-state palette overrides. */
+body.light-theme .task-item.due-tomorrow,
+body[data-theme='light'] .task-item.due-tomorrow {
+  background: rgba(217, 164, 65, 0.12);
+  border-color: rgba(180, 132, 38, 0.34);
+}
+
+body[data-theme='dark'] .task-item.due-tomorrow {
+  background: rgba(154, 119, 43, 0.2);
+  border-color: rgba(214, 174, 76, 0.38);
+}
+
+body.light-theme .quick-language select,
+body[data-theme='light'] .quick-language select {
+  color: #111827;
+}
+
+.task-form-meta input[type='time'] {
+  color-scheme: light;
+}
+
+body[data-theme='dark'] .task-form-meta input[type='time'] {
+  color-scheme: dark;
 }
 
 /* Native select menus need explicit colors in dark mode. */
@@ -1106,6 +1221,261 @@ body[data-theme='dark'] .task-form-meta input[type='date']::-webkit-calendar-pic
   width: 100%;
   min-width: 0;
   text-align: center;
+}
+
+/* Definitive sizing overrides. */
+.task-form-meta {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+  overflow: visible;
+}
+
+.task-form-meta > label {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  min-height: 52px;
+  padding: 0.25rem;
+}
+
+.task-form-meta > label input,
+.task-form-meta > label select {
+  min-width: 0;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  padding: 0.1rem;
+  font-size: 10px;
+}
+
+.quick-language,
+.quick-language:hover,
+.quick-language:focus-within {
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  flex: 0 0 46px;
+  padding: 0;
+  border: 1px solid rgba(176, 192, 255, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 6px 16px rgba(5, 12, 45, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: none;
+  filter: none;
+}
+
+.quick-language select,
+.quick-language select:hover,
+.quick-language select:focus {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  box-shadow: none;
+  text-align: center;
+}
+
+body.light-theme .quick-language select,
+body[data-theme='light'] .quick-language select {
+  color: #111827;
+}
+
+body.light-theme .quick-language option,
+body[data-theme='light'] .quick-language option {
+  color: #111827;
+  background: #ffffff;
+}
+
+body.light-theme .task-item.due-tomorrow,
+body[data-theme='light'] .task-item.due-tomorrow {
+  background: rgba(217, 164, 65, 0.12);
+  border-color: rgba(180, 132, 38, 0.34);
+  box-shadow: 0 2px 8px rgba(180, 132, 38, 0.06);
+}
+
+body.light-theme .task-item.due-today,
+body[data-theme='light'] .task-item.due-today {
+  background: rgba(70, 214, 178, 0.17);
+  border-color: rgba(40, 165, 139, 0.55);
+  box-shadow: 0 0 0 1px rgba(40, 165, 139, 0.12), 0 5px 14px rgba(27, 124, 104, 0.1);
+}
+
+body.light-theme .task-item.due-tomorrow .task-badge.due-date,
+body[data-theme='light'] .task-item.due-tomorrow .task-badge.due-date {
+  color: #8a6417;
+  background: rgba(246, 211, 119, 0.42);
+}
+
+@media (max-width: 767px) {
+  .task-form-meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .task-form-meta > label {
+    height: 48px;
+    min-height: 48px;
+  }
+}
+
+/* Final compact sizing: keep all four task controls on one row. */
+.task-form-meta {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.task-form-meta > label {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  min-height: 52px;
+  padding: 0.25rem;
+}
+
+.task-form-meta > label .meta-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 15px;
+}
+
+.task-form-meta > label input,
+.task-form-meta > label select {
+  min-width: 0;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  padding: 0.1rem;
+  font-size: 10px;
+}
+
+.quick-language,
+.quick-language:hover,
+.quick-language:focus-within {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  flex: 0 0 46px;
+  padding: 0;
+  border: 1px solid rgba(176, 192, 255, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 6px 16px rgba(5, 12, 45, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: none;
+  filter: none;
+}
+
+.quick-language select,
+.quick-language select:hover,
+.quick-language select:focus {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  box-shadow: none;
+  text-align: center;
+  appearance: auto;
+}
+
+@media (max-width: 767px) {
+  .task-form-meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .task-form-meta > label {
+    height: 48px;
+    min-height: 48px;
+  }
+}
+
+/* Compact composer controls: four equal squares in one row. */
+.task-form-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  max-height: 240px;
+  overflow: visible;
+}
+
+.task-form-meta > label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  align-items: center;
+  justify-items: center;
+  min-width: 0;
+  height: 58px;
+  min-height: 58px;
+  padding: 0.35rem 0.5rem;
+  border-radius: 12px;
+}
+
+.task-form-meta > label .meta-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+}
+
+.task-form-meta > label input,
+.task-form-meta > label select {
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  padding: 0.2rem 0.25rem;
+  font-size: 12px;
+  text-align: center;
+}
+
+.quick-language,
+.quick-language:hover,
+.quick-language:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(176, 192, 255, 0.34);
+  box-shadow: 0 4px 12px rgba(5, 12, 45, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.quick-language select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .task-form-meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.3rem;
+  }
+
+  .task-form-meta > label {
+    height: 52px;
+    min-height: 52px;
+    padding: 0.25rem;
+  }
+
+  .task-form-meta > label .meta-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 15px;
+  }
+
+  .task-form-meta > label input,
+  .task-form-meta > label select {
+    font-size: 10px;
+  }
 }
 
 /* Shared reference-inspired navigation header for both themes. */
@@ -1965,4 +2335,71 @@ body[data-theme='light'] select {
   width: 100%;
   min-width: 0;
   text-align: center;
+}
+
+.task-form-meta {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.task-form-meta > label {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  min-height: 52px;
+  padding: 0.25rem;
+}
+
+.task-form-meta > label input,
+.task-form-meta > label select {
+  min-width: 0;
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  padding: 0.1rem;
+  font-size: 10px;
+}
+
+.quick-language,
+.quick-language:hover,
+.quick-language:focus-within {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  flex: 0 0 46px;
+  padding: 0;
+  border: 1px solid rgba(176, 192, 255, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 6px 16px rgba(5, 12, 45, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: none;
+  filter: none;
+}
+
+.quick-language select,
+.quick-language select:hover,
+.quick-language select:focus {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  box-shadow: none;
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .task-form-meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .task-form-meta > label {
+    height: 48px;
+    min-height: 48px;
+  }
 }

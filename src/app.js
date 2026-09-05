@@ -31,6 +31,7 @@ const settingsDetailTitle = document.querySelector('#settings-detail-title');
 const settingsDetailCopy = document.querySelector('#settings-detail-copy');
 const settingsDetailActions = document.querySelector('#settings-detail-actions');
 const taskDueDate = document.querySelector('#task-due-date');
+const taskDueTime = document.querySelector('#task-due-time');
 const taskPriority = document.querySelector('#task-priority');
 const taskListSelect = document.querySelector('#task-list-select');
 const subtaskInput = document.querySelector('#subtask-input');
@@ -67,10 +68,10 @@ const priorityLabels = {
 
 const translations = {
   es: {
-    brand: 'Tareasy', today: 'Hoy', myTasks: 'Mis tareas', addTask: 'Añadir una tarea...', save: 'Guardar',
+        brand: 'Tareasy', today: 'Hoy', myTasks: 'Mis tareas', addTask: 'Añadir una tarea...', save: 'Guardar',
     all: 'Todas', active: 'Pendientes', completed: 'Completadas', done: 'Hechas', lists: 'Listas', newList: 'Nueva lista', cancel: 'Cancelar',
-    dueDate: 'Fecha de vencimiento', priority: 'Prioridad', list: 'Lista', low: 'Baja', medium: 'Media', high: 'Alta',
-    sort: 'Ordenar', lastAdded: 'Última tarea agregada', dueAsc: 'Fecha: menor a mayor', dueDesc: 'Fecha: mayor a menor', nameAsc: 'Nombre: A-Z', nameDesc: 'Nombre: Z-A', manual: 'Orden manual',
+    dueDate: 'Fecha de vencimiento', dueTime: 'Hora de vencimiento', todayLabel: 'HOY', tomorrow: 'Mañana', priority: 'Prioridad', list: 'Lista', low: 'Baja', medium: 'Media', high: 'Alta',
+    sort: 'Ordenar', lastAdded: 'Última tarea agregada', dueAsc: 'Fecha: menor a mayor', dueDesc: 'Fecha: mayor a menor', nameAsc: 'Nombre: A-Z', nameDesc: 'Nombre: Z-A', manual: 'Orden manual', dueTime: 'Hora de vencimiento', todayLabel: 'HOY', tomorrow: 'Mañana',
     settings: 'Ajustes', close: 'Cerrar ajustes', account: 'Cuenta', personalization: 'Personalización', themes: 'Temas', language: 'Idioma', support: 'Soporte',
     profile: 'Perfil', accountPage: 'Mi cuenta', manageProfile: 'Administrar perfil', sync: 'Sincronización', drive: 'Google Drive', icloud: 'iCloud', manualSync: 'Sincronizar manual',
     style: 'Estilo', minimal: 'Minimal', compact: 'Compacto', premium: 'Premium', view: 'Vista', compactList: 'Lista compacta', wideList: 'Lista amplia', board: 'Vista por tablero', mode: 'Modo', light: 'Claro', dark: 'Oscuro', system: 'Sistema',
@@ -81,7 +82,7 @@ const translations = {
     detailCopy: { accountPage: 'Revisa los datos de tu cuenta.', manageProfile: 'Personaliza la información visible de tu perfil.', drive: 'Elige cómo sincronizar tus tareas con Google Drive.', icloud: 'Configura la cuenta de iCloud que quieres utilizar.', manualSync: 'Inicia una sincronización manual de tus datos.', help: 'Encuentra respuestas y guías para usar Tareasy.', faq: 'Consulta las respuestas a las dudas más comunes.', sendMessage: 'Escribe un mensaje para nuestro equipo de soporte.', email: 'Envía tu consulta directamente por correo electrónico.', chat: 'Conversa con soporte desde la aplicación.' },
   },
   en: {
-    brand: 'Tareasy', today: 'Today', myTasks: 'My tasks', addTask: 'Add a task...', save: 'Save', all: 'All', active: 'Pending', completed: 'Completed', done: 'Done', lists: 'Lists', newList: 'New list', cancel: 'Cancel', dueDate: 'Due date', priority: 'Priority', list: 'List', low: 'Low', medium: 'Medium', high: 'High', sort: 'Sort', lastAdded: 'Last added', dueAsc: 'Date: oldest first', dueDesc: 'Date: newest first', nameAsc: 'Name: A-Z', nameDesc: 'Name: Z-A', manual: 'Manual order', settings: 'Settings', close: 'Close settings', account: 'Account', personalization: 'Personalization', themes: 'Themes', language: 'Language', support: 'Support', profile: 'Profile', accountPage: 'My account', manageProfile: 'Manage profile', sync: 'Sync', drive: 'Google Drive', icloud: 'iCloud', manualSync: 'Sync manually', style: 'Style', minimal: 'Minimal', compact: 'Compact', premium: 'Premium', view: 'View', compactList: 'Compact list', wideList: 'Wide list', board: 'Board view', mode: 'Mode', light: 'Light', dark: 'Dark', system: 'System', help: 'Help center', faq: 'Frequently asked questions', contact: 'Contact', sendMessage: 'Send a message', email: 'Email', chat: 'Chat', languageOptions: 'Language options', emptyTasks: 'No tasks in this view. Add a new task or change lists.', subtaskEmpty: 'No subtasks yet.', addSubtask: 'Add subtask...', add: 'Add', edit: 'Edit', remove: 'Delete', moveUp: 'Move up', moveDown: 'Move down', more: 'More options', completedTask: 'Mark as completed', pendingTask: 'Mark as pending', detail: 'Detail', backSettings: '‹ Back to Settings', saveChanges: 'Save changes', configuration: 'Specific settings for', detailCopy: { accountPage: 'Review your account details.', manageProfile: 'Customize the information shown on your profile.', drive: 'Choose how to sync your tasks with Google Drive.', icloud: 'Configure the iCloud account you want to use.', manualSync: 'Start a manual data sync.', help: 'Find answers and guides for using Tareasy.', faq: 'Browse answers to common questions.', sendMessage: 'Write a message for our support team.', email: 'Send your question by email.', chat: 'Chat with support from the app.' },
+    brand: 'Tareasy', today: 'Today', myTasks: 'My tasks', addTask: 'Add a task...', save: 'Save', all: 'All', active: 'Pending', completed: 'Completed', done: 'Done', lists: 'Lists', newList: 'New list', cancel: 'Cancel', dueDate: 'Due date', dueTime: 'Due time', todayLabel: 'TODAY', tomorrow: 'Tomorrow', priority: 'Priority', list: 'List', low: 'Low', medium: 'Medium', high: 'High', sort: 'Sort', lastAdded: 'Last added', dueAsc: 'Date: oldest first', dueDesc: 'Date: newest first', nameAsc: 'Name: A-Z', nameDesc: 'Name: Z-A', manual: 'Manual order', settings: 'Settings', close: 'Close settings', account: 'Account', personalization: 'Personalization', themes: 'Themes', language: 'Language', support: 'Support', profile: 'Profile', accountPage: 'My account', manageProfile: 'Manage profile', sync: 'Sync', drive: 'Google Drive', icloud: 'iCloud', manualSync: 'Sync manually', style: 'Style', minimal: 'Minimal', compact: 'Compact', premium: 'Premium', view: 'View', compactList: 'Compact list', wideList: 'Wide list', board: 'Board view', mode: 'Mode', light: 'Light', dark: 'Dark', system: 'System', help: 'Help center', faq: 'Frequently asked questions', contact: 'Contact', sendMessage: 'Send a message', email: 'Email', chat: 'Chat', languageOptions: 'Language options', emptyTasks: 'No tasks in this view. Add a new task or change lists.', subtaskEmpty: 'No subtasks yet.', addSubtask: 'Add subtask...', add: 'Add', edit: 'Edit', remove: 'Delete', moveUp: 'Move up', moveDown: 'Move down', more: 'More options', completedTask: 'Mark as completed', pendingTask: 'Mark as pending', detail: 'Detail', backSettings: '‹ Back to Settings', saveChanges: 'Save changes', configuration: 'Specific settings for', detailCopy: { accountPage: 'Review your account details.', manageProfile: 'Customize the information shown on your profile.', drive: 'Choose how to sync your tasks with Google Drive.', icloud: 'Configure the iCloud account you want to use.', manualSync: 'Start a manual data sync.', help: 'Find answers and guides for using Tareasy.', faq: 'Browse answers to common questions.', sendMessage: 'Write a message for our support team.', email: 'Send your question by email.', chat: 'Chat with support from the app.' },
   },
   zh: {
     brand: 'Tareasy', today: '今天', myTasks: '我的任务', addTask: '添加任务...', save: '保存', all: '全部', active: '待办', completed: '已完成', done: '完成', lists: '列表', newList: '新列表', cancel: '取消', dueDate: '截止日期', priority: '优先级', list: '列表', low: '低', medium: '中', high: '高', sort: '排序', lastAdded: '最近添加', dueAsc: '日期：从早到晚', dueDesc: '日期：从晚到早', nameAsc: '名称：A-Z', nameDesc: '名称：Z-A', manual: '手动排序', settings: '设置', close: '关闭设置', account: '账户', personalization: '个性化', themes: '主题', language: '语言', support: '支持', profile: '个人资料', accountPage: '我的账户', manageProfile: '管理个人资料', sync: '同步', drive: 'Google Drive', icloud: 'iCloud', manualSync: '手动同步', style: '样式', minimal: '简约', compact: '紧凑', premium: '高级', view: '视图', compactList: '紧凑列表', wideList: '宽列表', board: '看板视图', mode: '模式', light: '浅色', dark: '深色', system: '系统', help: '帮助中心', faq: '常见问题', contact: '联系', sendMessage: '发送消息', email: '电子邮件', chat: '聊天', languageOptions: '语言选项', emptyTasks: '此视图中没有任务。添加新任务或切换列表。', subtaskEmpty: '还没有子任务。', addSubtask: '添加子任务...', add: '添加', edit: '编辑', remove: '删除', moveUp: '上移', moveDown: '下移', more: '更多选项', completedTask: '标记为已完成', pendingTask: '标记为待办', detail: '详情', backSettings: '‹ 返回设置', saveChanges: '保存更改', configuration: '具体设置：', detailCopy: { accountPage: '查看账户信息。', manageProfile: '自定义个人资料信息。', drive: '选择 Google Drive 任务同步方式。', icloud: '配置要使用的 iCloud 账户。', manualSync: '开始手动同步数据。', help: '查找 Tareasy 使用帮助和指南。', faq: '查看常见问题的答案。', sendMessage: '给支持团队留言。', email: '通过电子邮件发送问题。', chat: '在应用中联系支持。' },
@@ -95,17 +96,35 @@ function t(key) {
   return translations[currentLanguage]?.[key] ?? translations.es[key] ?? key;
 }
 
+function dateLabel(key) {
+  const fallback = {
+    es: { dueTime: 'Hora de vencimiento', todayLabel: 'HOY', tomorrow: 'Mañana' },
+    en: { dueTime: 'Due time', todayLabel: 'TODAY', tomorrow: 'Tomorrow' },
+    zh: { dueTime: '截止时间', todayLabel: '今天', tomorrow: '明天' },
+    pt: { dueTime: 'Hora de vencimento', todayLabel: 'HOJE', tomorrow: 'Amanhã' },
+  };
+  return translations[currentLanguage]?.[key] ?? fallback[currentLanguage]?.[key] ?? fallback.es[key];
+}
+
 function applyTranslations() {
   document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : currentLanguage;
   document.querySelector('.brand-name').textContent = t('brand');
   document.querySelector('.main-heading .eyebrow').textContent = t('today');
   document.querySelector('#view-title').textContent = getCurrentListName();
-  document.querySelectorAll('[data-filter]').forEach((button) => { button.textContent = t(button.dataset.filter); });
+  const filterLabels = {
+    'all-lists': { es: 'Todas', en: 'All', zh: '全部', pt: 'Todas' },
+    'current-all': { es: 'Todas de esta lista', en: 'All in this list', zh: '此列表中的全部', pt: 'Todas desta lista' },
+    active: { es: 'Pendientes', en: 'Pending', zh: '待办', pt: 'Pendentes' },
+    completed: { es: 'Completadas', en: 'Completed', zh: '已完成', pt: 'Concluídas' },
+    all: { es: 'Todas', en: 'All', zh: '全部', pt: 'Todas' },
+  };
+  document.querySelectorAll('[data-filter]').forEach((button) => { button.textContent = filterLabels[button.dataset.filter]?.[currentLanguage] || button.dataset.filter; });
   document.querySelector('.section-header span').textContent = t('lists');
   taskInput.placeholder = t('addTask');
   listInput.placeholder = t('newList');
   document.querySelector('#add-list-button').setAttribute('aria-label', t('newList'));
   document.querySelector('#task-due-date').setAttribute('aria-label', t('dueDate'));
+  document.querySelector('#task-due-time').setAttribute('aria-label', dateLabel('dueTime'));
   document.querySelector('#task-priority').setAttribute('aria-label', t('priority'));
   document.querySelector('#task-list-select').setAttribute('aria-label', t('list'));
   document.querySelector('#settings-panel h3').textContent = t('settings');
@@ -167,6 +186,10 @@ function getListById(listId) {
 }
 
 function getCurrentListName() {
+  if (activeFilter === 'all-lists') {
+    return { es: 'Todas', en: 'All', zh: '全部', pt: 'Todas' }[currentLanguage];
+  }
+
   if (selectedListId === 'all') {
     return activeFilter === 'completed' ? t('completed') : activeFilter === 'active' ? t('active') : t('all');
   }
@@ -279,7 +302,7 @@ function renderSidebarLists() {
 }
 
 function getVisibleTasks() {
-  const scopedTasks = selectedListId === 'all'
+  const scopedTasks = activeFilter === 'all-lists' || selectedListId === 'all'
     ? tasks
     : tasks.filter((task) => task.listId === selectedListId);
 
@@ -325,6 +348,24 @@ function formatDueDate(dateValue) {
   return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(date);
 }
 
+function getLocalDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getDueDateState(dateValue) {
+  if (!dateValue) return '';
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const dateKey = getLocalDateKey(new Date(`${dateValue}T00:00:00`));
+  if (dateKey === getLocalDateKey(today)) return 'today';
+  if (dateKey === getLocalDateKey(tomorrow)) return 'tomorrow';
+  return '';
+}
+
 function renderSubtasksEditor() {
   if (!draftSubtasks.length) {
     subtaskList.innerHTML = `<li class="empty-state">${t('subtaskEmpty')}</li>`;
@@ -361,10 +402,12 @@ function renderTasks() {
 
   taskList.innerHTML = visibleTasks
     .map((task) => {
-      const dueText = task.dueDate ? formatDueDate(task.dueDate) : '';
+      const dueState = getDueDateState(task.dueDate);
+      const dueText = dueState === 'today' ? dateLabel('todayLabel') : dueState === 'tomorrow' ? dateLabel('tomorrow') : task.dueDate ? formatDueDate(task.dueDate) : '';
+      const timeText = task.dueTime ? ` ${task.dueTime}` : '';
       const isOverdue = task.dueDate && !task.completed && new Date(`${task.dueDate}T00:00:00`) < new Date(new Date().toDateString());
       return `
-        <li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+        <li class="task-item ${task.completed ? 'completed' : ''} ${dueState ? `due-${dueState}` : ''}" data-id="${task.id}">
           <div class="task-header" data-action="detail" data-id="${task.id}">
             <button
               type="button"
@@ -380,7 +423,7 @@ function renderTasks() {
               <span class="task-text">${sanitizeInput(task.text)}</span>
               <div class="task-meta-row">
                 <span class="task-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span>
-                ${dueText ? `<span class="task-badge due-date ${isOverdue ? 'overdue' : ''}">📅 ${dueText}</span>` : ''}
+                ${dueText ? `<span class="task-badge due-date ${isOverdue ? 'overdue' : ''}">📅 ${dueText}${timeText}</span>` : ''}
               </div>
             </div>
 
@@ -423,6 +466,7 @@ function openTaskEditor(taskId) {
   taskForm.dataset.mode = 'edit';
   taskInput.value = task.text;
   taskDueDate.value = task.dueDate || '';
+  taskDueTime.value = task.dueTime || '';
   taskPriority.value = task.priority || 'media';
   taskListSelect.value = task.listId || lists[0].id;
   draftSubtasks = Array.isArray(task.subtasks) ? [...task.subtasks] : [];
@@ -481,6 +525,7 @@ function submitTask(event) {
     completed: editingTaskId ? tasks.find((task) => task.id === editingTaskId)?.completed || false : false,
     createdAt: editingTaskId ? tasks.find((task) => task.id === editingTaskId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
     dueDate: taskDueDate.value || '',
+    dueTime: taskDueTime.value || '',
     priority: taskPriority.value || 'media',
     listId: selectedList,
     subtasks: draftSubtasks,
@@ -749,7 +794,7 @@ function deleteList(listId) {
 
   if (selectedListId === listId) {
     selectedListId = 'all';
-    activeFilter = 'all';
+    activeFilter = 'all-lists';
   }
 
   persistState();
@@ -760,7 +805,12 @@ function deleteList(listId) {
 }
 
 function onFilterChange(nextFilter) {
+  if (nextFilter !== 'all-lists' && selectedListId === 'all' && lists.length) {
+    selectedListId = lists[0].id;
+  }
   activeFilter = nextFilter;
+  renderSidebarLists();
+  renderListOptions();
   updateFilterButtons();
   renderTasks();
 }
@@ -825,6 +875,20 @@ function handleSidebarListActions(event) {
 
 function bindEvents() {
   taskForm.addEventListener('submit', submitTask);
+  taskForm.querySelectorAll('.task-form-meta > label').forEach((metaLabel) => {
+    metaLabel.addEventListener('click', (event) => {
+      if (event.target.matches('input, select, option')) {
+        return;
+      }
+
+      const control = metaLabel.querySelector('input, select');
+      if (!control) return;
+      control.focus();
+      if (typeof control.showPicker === 'function' && control.matches('input[type="date"], input[type="time"]')) {
+        control.showPicker();
+      }
+    });
+  });
   taskList.addEventListener('click', handleTaskAction);
   taskList.addEventListener('click', handleTaskSubtaskAction);
   taskList.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -876,7 +940,7 @@ function bindEvents() {
     }
 
     selectedListId = listButton.dataset.listId;
-    activeFilter = 'all';
+    activeFilter = 'current-all';
     updateFilterButtons();
     renderSidebarLists();
     renderListOptions();
@@ -1007,6 +1071,7 @@ function bindEvents() {
 }
 
 function initializeApp() {
+  activeFilter = 'all-lists';
   const isDark = currentTheme === 'dark';
   applyTheme(isDark ? 'dark' : 'light');
   applyTranslations();

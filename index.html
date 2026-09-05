@@ -35,7 +35,7 @@
         <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema">
           ☀️
         </button>
-        <label class="quick-language" aria-label="Cambiar idioma rápidamente">
+        <label class="icon-button quick-language" aria-label="Cambiar idioma rápidamente">
           <select id="quick-language-select" aria-label="Cambiar idioma">
             <option value="es">ES</option>
             <option value="en">EN</option>
@@ -169,7 +169,8 @@
       <aside id="task-sidebar" class="sidebar" aria-label="Navegación lateral">
         <nav class="side-nav" aria-label="Filtros de tareas">
           <div class="nav-group">
-            <button class="nav-item active" type="button" data-filter="all">Todas</button>
+            <button class="nav-item active" type="button" data-filter="all-lists">Todas</button>
+            <button class="nav-item" type="button" data-filter="current-all">Todas de esta lista</button>
             <button class="nav-item" type="button" data-filter="active">Pendientes</button>
             <button class="nav-item" type="button" data-filter="completed">Completadas</button>
           </div>
@@ -237,6 +238,12 @@
               </label>
 
               <label>
+                <span class="meta-icon" aria-hidden="true">◷</span>
+                <span class="sr-only">Hora de vencimiento</span>
+                <input id="task-due-time" name="dueTime" type="time" />
+              </label>
+
+              <label>
                 <span class="meta-icon" aria-hidden="true">⚑</span>
                 <span class="sr-only">Prioridad</span>
                 <select id="task-priority" name="priority">
@@ -283,7 +290,8 @@
     </section>
 
     <nav class="bottom-nav" aria-label="Navegación inferior">
-      <button class="bottom-nav-item active" type="button" data-filter="all">Todas</button>
+      <button class="bottom-nav-item active" type="button" data-filter="all-lists">Todas</button>
+      <button class="bottom-nav-item" type="button" data-filter="current-all">Todas de esta lista</button>
       <button class="bottom-nav-item" type="button" data-filter="active">Pendientes</button>
       <button class="bottom-nav-item" type="button" data-filter="completed">Hechas</button>
     </nav>
