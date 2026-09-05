@@ -20,6 +20,7 @@ const listInput = document.querySelector('#list-input');
 const addListButton = document.querySelector('#add-list-button');
 const cancelListButton = document.querySelector('#cancel-list-button');
 const themeToggle = document.querySelector('#theme-toggle');
+const quickLanguageSelect = document.querySelector('#quick-language-select');
 const settingsButton = document.querySelector('#settings-button');
 const settingsPanel = document.querySelector('#settings-panel');
 const settingsOverlay = document.querySelector('#settings-overlay');
@@ -49,6 +50,7 @@ let lists = appState.lists;
 let activeFilter = 'all';
 let selectedListId = 'all';
 let currentTheme = appState.theme;
+let currentLanguage = appState.language || 'es';
 let editingTaskId = null;
 let draftSubtasks = [];
 let detailTaskId = null;
@@ -58,13 +60,106 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 const priorityLabels = {
-  alta: 'Alta',
-  media: 'Media',
-  baja: 'Baja',
+  alta: 'high',
+  media: 'medium',
+  baja: 'low',
 };
 
+const translations = {
+  es: {
+    brand: 'Tareasy', today: 'Hoy', myTasks: 'Mis tareas', addTask: 'Añadir una tarea...', save: 'Guardar',
+    all: 'Todas', active: 'Pendientes', completed: 'Completadas', done: 'Hechas', lists: 'Listas', newList: 'Nueva lista', cancel: 'Cancelar',
+    dueDate: 'Fecha de vencimiento', priority: 'Prioridad', list: 'Lista', low: 'Baja', medium: 'Media', high: 'Alta',
+    sort: 'Ordenar', lastAdded: 'Última tarea agregada', dueAsc: 'Fecha: menor a mayor', dueDesc: 'Fecha: mayor a menor', nameAsc: 'Nombre: A-Z', nameDesc: 'Nombre: Z-A', manual: 'Orden manual',
+    settings: 'Ajustes', close: 'Cerrar ajustes', account: 'Cuenta', personalization: 'Personalización', themes: 'Temas', language: 'Idioma', support: 'Soporte',
+    profile: 'Perfil', accountPage: 'Mi cuenta', manageProfile: 'Administrar perfil', sync: 'Sincronización', drive: 'Google Drive', icloud: 'iCloud', manualSync: 'Sincronizar manual',
+    style: 'Estilo', minimal: 'Minimal', compact: 'Compacto', premium: 'Premium', view: 'Vista', compactList: 'Lista compacta', wideList: 'Lista amplia', board: 'Vista por tablero', mode: 'Modo', light: 'Claro', dark: 'Oscuro', system: 'Sistema',
+    help: 'Centro de ayuda', faq: 'Preguntas frecuentes', contact: 'Contacto', sendMessage: 'Enviar mensaje', email: 'Email', chat: 'Chat', languageOptions: 'Opciones de idioma',
+    emptyTasks: 'No hay tareas en esta vista. Añade una nueva tarea o cambia de lista.', subtaskEmpty: 'Sin subtareas todavía.', addSubtask: 'Añadir subtarea...', add: 'Añadir',
+    edit: 'Editar', remove: 'Eliminar', moveUp: 'Subir', moveDown: 'Bajar', more: 'Más opciones', completedTask: 'Marcar como completada', pendingTask: 'Marcar como pendiente',
+    detail: 'Detalle', backSettings: '‹ Volver a Ajustes', saveChanges: 'Guardar cambios', configuration: 'Configuración específica de',
+    detailCopy: { accountPage: 'Revisa los datos de tu cuenta.', manageProfile: 'Personaliza la información visible de tu perfil.', drive: 'Elige cómo sincronizar tus tareas con Google Drive.', icloud: 'Configura la cuenta de iCloud que quieres utilizar.', manualSync: 'Inicia una sincronización manual de tus datos.', help: 'Encuentra respuestas y guías para usar Tareasy.', faq: 'Consulta las respuestas a las dudas más comunes.', sendMessage: 'Escribe un mensaje para nuestro equipo de soporte.', email: 'Envía tu consulta directamente por correo electrónico.', chat: 'Conversa con soporte desde la aplicación.' },
+  },
+  en: {
+    brand: 'Tareasy', today: 'Today', myTasks: 'My tasks', addTask: 'Add a task...', save: 'Save', all: 'All', active: 'Pending', completed: 'Completed', done: 'Done', lists: 'Lists', newList: 'New list', cancel: 'Cancel', dueDate: 'Due date', priority: 'Priority', list: 'List', low: 'Low', medium: 'Medium', high: 'High', sort: 'Sort', lastAdded: 'Last added', dueAsc: 'Date: oldest first', dueDesc: 'Date: newest first', nameAsc: 'Name: A-Z', nameDesc: 'Name: Z-A', manual: 'Manual order', settings: 'Settings', close: 'Close settings', account: 'Account', personalization: 'Personalization', themes: 'Themes', language: 'Language', support: 'Support', profile: 'Profile', accountPage: 'My account', manageProfile: 'Manage profile', sync: 'Sync', drive: 'Google Drive', icloud: 'iCloud', manualSync: 'Sync manually', style: 'Style', minimal: 'Minimal', compact: 'Compact', premium: 'Premium', view: 'View', compactList: 'Compact list', wideList: 'Wide list', board: 'Board view', mode: 'Mode', light: 'Light', dark: 'Dark', system: 'System', help: 'Help center', faq: 'Frequently asked questions', contact: 'Contact', sendMessage: 'Send a message', email: 'Email', chat: 'Chat', languageOptions: 'Language options', emptyTasks: 'No tasks in this view. Add a new task or change lists.', subtaskEmpty: 'No subtasks yet.', addSubtask: 'Add subtask...', add: 'Add', edit: 'Edit', remove: 'Delete', moveUp: 'Move up', moveDown: 'Move down', more: 'More options', completedTask: 'Mark as completed', pendingTask: 'Mark as pending', detail: 'Detail', backSettings: '‹ Back to Settings', saveChanges: 'Save changes', configuration: 'Specific settings for', detailCopy: { accountPage: 'Review your account details.', manageProfile: 'Customize the information shown on your profile.', drive: 'Choose how to sync your tasks with Google Drive.', icloud: 'Configure the iCloud account you want to use.', manualSync: 'Start a manual data sync.', help: 'Find answers and guides for using Tareasy.', faq: 'Browse answers to common questions.', sendMessage: 'Write a message for our support team.', email: 'Send your question by email.', chat: 'Chat with support from the app.' },
+  },
+  zh: {
+    brand: 'Tareasy', today: '今天', myTasks: '我的任务', addTask: '添加任务...', save: '保存', all: '全部', active: '待办', completed: '已完成', done: '完成', lists: '列表', newList: '新列表', cancel: '取消', dueDate: '截止日期', priority: '优先级', list: '列表', low: '低', medium: '中', high: '高', sort: '排序', lastAdded: '最近添加', dueAsc: '日期：从早到晚', dueDesc: '日期：从晚到早', nameAsc: '名称：A-Z', nameDesc: '名称：Z-A', manual: '手动排序', settings: '设置', close: '关闭设置', account: '账户', personalization: '个性化', themes: '主题', language: '语言', support: '支持', profile: '个人资料', accountPage: '我的账户', manageProfile: '管理个人资料', sync: '同步', drive: 'Google Drive', icloud: 'iCloud', manualSync: '手动同步', style: '样式', minimal: '简约', compact: '紧凑', premium: '高级', view: '视图', compactList: '紧凑列表', wideList: '宽列表', board: '看板视图', mode: '模式', light: '浅色', dark: '深色', system: '系统', help: '帮助中心', faq: '常见问题', contact: '联系', sendMessage: '发送消息', email: '电子邮件', chat: '聊天', languageOptions: '语言选项', emptyTasks: '此视图中没有任务。添加新任务或切换列表。', subtaskEmpty: '还没有子任务。', addSubtask: '添加子任务...', add: '添加', edit: '编辑', remove: '删除', moveUp: '上移', moveDown: '下移', more: '更多选项', completedTask: '标记为已完成', pendingTask: '标记为待办', detail: '详情', backSettings: '‹ 返回设置', saveChanges: '保存更改', configuration: '具体设置：', detailCopy: { accountPage: '查看账户信息。', manageProfile: '自定义个人资料信息。', drive: '选择 Google Drive 任务同步方式。', icloud: '配置要使用的 iCloud 账户。', manualSync: '开始手动同步数据。', help: '查找 Tareasy 使用帮助和指南。', faq: '查看常见问题的答案。', sendMessage: '给支持团队留言。', email: '通过电子邮件发送问题。', chat: '在应用中联系支持。' },
+  },
+  pt: {
+    brand: 'Tareasy', today: 'Hoje', myTasks: 'Minhas tarefas', addTask: 'Adicionar tarefa...', save: 'Salvar', all: 'Todas', active: 'Pendentes', completed: 'Concluídas', done: 'Feitas', lists: 'Listas', newList: 'Nova lista', cancel: 'Cancelar', dueDate: 'Data de vencimento', priority: 'Prioridade', list: 'Lista', low: 'Baixa', medium: 'Média', high: 'Alta', sort: 'Ordenar', lastAdded: 'Última adicionada', dueAsc: 'Data: menor para maior', dueDesc: 'Data: maior para menor', nameAsc: 'Nome: A-Z', nameDesc: 'Nome: Z-A', manual: 'Ordem manual', settings: 'Configurações', close: 'Fechar configurações', account: 'Conta', personalization: 'Personalização', themes: 'Temas', language: 'Idioma', support: 'Suporte', profile: 'Perfil', accountPage: 'Minha conta', manageProfile: 'Administrar perfil', sync: 'Sincronização', drive: 'Google Drive', icloud: 'iCloud', manualSync: 'Sincronizar manualmente', style: 'Estilo', minimal: 'Minimal', compact: 'Compacto', premium: 'Premium', view: 'Visualização', compactList: 'Lista compacta', wideList: 'Lista ampla', board: 'Visualização em quadro', mode: 'Modo', light: 'Claro', dark: 'Escuro', system: 'Sistema', help: 'Central de ajuda', faq: 'Perguntas frequentes', contact: 'Contato', sendMessage: 'Enviar mensagem', email: 'Email', chat: 'Chat', languageOptions: 'Opções de idioma', emptyTasks: 'Não há tarefas nesta visualização. Adicione uma tarefa ou troque de lista.', subtaskEmpty: 'Ainda não há subtarefas.', addSubtask: 'Adicionar subtarefa...', add: 'Adicionar', edit: 'Editar', remove: 'Excluir', moveUp: 'Mover para cima', moveDown: 'Mover para baixo', more: 'Mais opções', completedTask: 'Marcar como concluída', pendingTask: 'Marcar como pendente', detail: 'Detalhes', backSettings: '‹ Voltar às configurações', saveChanges: 'Salvar alterações', configuration: 'Configurações específicas de', detailCopy: { accountPage: 'Revise os dados da sua conta.', manageProfile: 'Personalize as informações do seu perfil.', drive: 'Escolha como sincronizar suas tarefas com o Google Drive.', icloud: 'Configure a conta do iCloud que deseja usar.', manualSync: 'Inicie uma sincronização manual dos dados.', help: 'Encontre respostas e guias para usar o Tareasy.', faq: 'Consulte respostas para dúvidas comuns.', sendMessage: 'Escreva uma mensagem para nossa equipe de suporte.', email: 'Envie sua dúvida por email.', chat: 'Converse com o suporte pelo aplicativo.' },
+  },
+};
+
+function t(key) {
+  return translations[currentLanguage]?.[key] ?? translations.es[key] ?? key;
+}
+
+function applyTranslations() {
+  document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : currentLanguage;
+  document.querySelector('.brand-name').textContent = t('brand');
+  document.querySelector('.main-heading .eyebrow').textContent = t('today');
+  document.querySelector('#view-title').textContent = getCurrentListName();
+  document.querySelectorAll('[data-filter]').forEach((button) => { button.textContent = t(button.dataset.filter); });
+  document.querySelector('.section-header span').textContent = t('lists');
+  taskInput.placeholder = t('addTask');
+  listInput.placeholder = t('newList');
+  document.querySelector('#add-list-button').setAttribute('aria-label', t('newList'));
+  document.querySelector('#task-due-date').setAttribute('aria-label', t('dueDate'));
+  document.querySelector('#task-priority').setAttribute('aria-label', t('priority'));
+  document.querySelector('#task-list-select').setAttribute('aria-label', t('list'));
+  document.querySelector('#settings-panel h3').textContent = t('settings');
+  closeSettingsButton.setAttribute('aria-label', t('close'));
+  document.querySelectorAll('.settings-section h4').forEach((heading, index) => { heading.textContent = [t('account'), t('personalization'), t('themes'), t('language'), t('support')][index]; });
+  const settingLabels = { perfil: 'profile', sincronizacion: 'sync', estilo: 'style', vista: 'view', modo: 'mode', language: 'language' };
+  document.querySelectorAll('.settings-option[data-setting]').forEach((button) => {
+    const label = settingLabels[button.dataset.setting];
+    if (label) button.firstElementChild.textContent = t(label);
+  });
+  const settingValues = { perfil: 'accountPage', sincronizacion: 'drive', estilo: 'minimal', vista: 'compactList', modo: 'light' };
+  document.querySelectorAll('.settings-option[data-setting]').forEach((button) => {
+    const value = button.querySelector('.settings-value');
+    if (value && settingValues[button.dataset.setting]) value.textContent = t(settingValues[button.dataset.setting]);
+  });
+  const languageValue = document.querySelector('[data-setting="language"] .settings-value');
+  if (languageValue) languageValue.textContent = { es: 'Español', en: 'English', zh: '中文', pt: 'Português' }[currentLanguage];
+  const menuTranslations = { estilo: ['minimal', 'compact', 'premium'], vista: ['compactList', 'wideList', 'board'], modo: ['light', 'dark', 'system'] };
+  document.querySelectorAll('.settings-item-group').forEach((group) => {
+    const setting = group.querySelector('.settings-option')?.dataset.setting;
+    if (setting === 'language') return;
+    group.querySelectorAll('.settings-menu-item').forEach((item, index) => {
+      const key = menuTranslations[setting]?.[index];
+      if (key) item.textContent = t(key);
+    });
+  });
+  document.querySelectorAll('.settings-page-link').forEach((button) => { const key = button.dataset.settingPageKey || Object.keys({ accountPage: 1, manageProfile: 1, drive: 1, icloud: 1, manualSync: 1, help: 1, faq: 1, sendMessage: 1, email: 1, chat: 1 }).find((item) => translations.es[item] === button.dataset.settingPage); if (key) button.firstElementChild.textContent = t(key); });
+  document.querySelectorAll('.settings-menu-item[data-language]').forEach((item) => { item.textContent = { es: 'Español', en: 'English', zh: '中文', pt: 'Português' }[item.dataset.language]; });
+  document.querySelector('#task-sort-select').querySelectorAll('option').forEach((option) => { option.textContent = t({ 'created-desc': 'lastAdded', 'due-asc': 'dueAsc', 'due-desc': 'dueDesc', 'name-asc': 'nameAsc', 'name-desc': 'nameDesc', manual: 'manual' }[option.value]); });
+  document.querySelector('.sort-control span').textContent = t('sort');
+  quickLanguageSelect.value = currentLanguage;
+  quickLanguageSelect.setAttribute('aria-label', t('language'));
+  document.querySelector('#task-priority option[value="baja"]').textContent = t('low');
+  document.querySelector('#task-priority option[value="media"]').textContent = t('medium');
+  document.querySelector('#task-priority option[value="alta"]').textContent = t('high');
+  document.querySelector('#subtask-input').placeholder = t('addSubtask');
+  document.querySelector('#add-subtask-button').textContent = t('add');
+  document.querySelector('#cancel-edit-task').textContent = t('cancel');
+  document.querySelector('#list-form .primary-button').textContent = t('save');
+  document.querySelector('#cancel-list-button').textContent = t('cancel');
+  document.querySelector('#close-task-detail').setAttribute('aria-label', t('cancel'));
+  document.querySelector('#task-detail-panel .eyebrow').textContent = t('detail');
+  document.querySelector('#settings-back').textContent = t('backSettings');
+  renderSidebarLists();
+  renderListOptions();
+  renderTasks();
+}
+
 function persistState() {
-  saveAppState({ theme: currentTheme, lists, tasks, taskOrder, manualTaskOrder });
+  saveAppState({ theme: currentTheme, language: currentLanguage, lists, tasks, taskOrder, manualTaskOrder });
+}
+
+function getPriorityLabel(priority) {
+  return t(priorityLabels[priority] || 'medium');
 }
 
 function getListById(listId) {
@@ -73,7 +168,7 @@ function getListById(listId) {
 
 function getCurrentListName() {
   if (selectedListId === 'all') {
-    return 'Mis tareas';
+    return activeFilter === 'completed' ? t('completed') : activeFilter === 'active' ? t('active') : t('all');
   }
 
   const currentList = getListById(selectedListId);
@@ -118,22 +213,31 @@ function closeSettingsMenu() {
 
 function openSettingsDetail(settingName) {
   settingsPanel.querySelectorAll('.settings-menu').forEach((menu) => menu.classList.add('hidden'));
-  settingsDetailTitle.textContent = settingName;
+  const settingKeys = { 'Mi cuenta': 'accountPage', 'Administrar perfil': 'manageProfile', 'Google Drive': 'drive', iCloud: 'icloud', 'Sincronizar manual': 'manualSync', 'Centro de ayuda': 'help', 'Preguntas frecuentes': 'faq', 'Enviar mensaje': 'sendMessage', Email: 'email', Chat: 'chat' };
+  const settingKey = settingKeys[settingName];
+  settingsDetailTitle.textContent = settingKey ? t(settingKey) : settingName;
+  const detailLabels = {
+    es: { name: 'Nombre', description: 'Descripción', account: 'Cuenta conectada', apple: 'Apple ID', message: 'Mensaje', namePlaceholder: 'Tu nombre', aboutPlaceholder: 'Cuéntanos sobre ti', emailPlaceholder: 'correo@ejemplo.com', messagePlaceholder: '¿En qué podemos ayudarte?', lastSync: 'Última sincronización: todavía no realizada.', guides: 'Abrir guías', questions: 'Ver preguntas', emailAction: 'Redactar email', chatAction: 'Iniciar chat' },
+    en: { name: 'Name', description: 'Description', account: 'Connected account', apple: 'Apple ID', message: 'Message', namePlaceholder: 'Your name', aboutPlaceholder: 'Tell us about yourself', emailPlaceholder: 'email@example.com', messagePlaceholder: 'How can we help?', lastSync: 'Last sync: not performed yet.', guides: 'Open guides', questions: 'View questions', emailAction: 'Write email', chatAction: 'Start chat' },
+    zh: { name: '姓名', description: '描述', account: '已连接账户', apple: 'Apple ID', message: '消息', namePlaceholder: '你的姓名', aboutPlaceholder: '介绍一下自己', emailPlaceholder: 'email@example.com', messagePlaceholder: '有什么可以帮助你？', lastSync: '上次同步：尚未进行。', guides: '打开指南', questions: '查看问题', emailAction: '撰写邮件', chatAction: '开始聊天' },
+    pt: { name: 'Nome', description: 'Descrição', account: 'Conta conectada', apple: 'Apple ID', message: 'Mensagem', namePlaceholder: 'Seu nome', aboutPlaceholder: 'Conte sobre você', emailPlaceholder: 'email@exemplo.com', messagePlaceholder: 'Como podemos ajudar?', lastSync: 'Última sincronização: ainda não realizada.', guides: 'Abrir guias', questions: 'Ver perguntas', emailAction: 'Redigir email', chatAction: 'Iniciar chat' },
+  }[currentLanguage];
   const detailContent = {
-    'Mi cuenta': ['Revisa los datos de tu cuenta.', '<label class="settings-field">Nombre<input type="text" placeholder="Tu nombre" /></label>'],
-    'Administrar perfil': ['Personaliza la información visible de tu perfil.', '<label class="settings-field">Descripción<textarea rows="3" placeholder="Cuéntanos sobre ti"></textarea></label>'],
-    'Google Drive': ['Elige cómo sincronizar tus tareas con Google Drive.', '<label class="settings-field">Cuenta conectada<input type="email" placeholder="correo@ejemplo.com" /></label>'],
-    iCloud: ['Configura la cuenta de iCloud que quieres utilizar.', '<label class="settings-field">Apple ID<input type="email" placeholder="correo@ejemplo.com" /></label>'],
-    'Sincronizar manual': ['Inicia una sincronización manual de tus datos.', '<p class="settings-status">Última sincronización: todavía no realizada.</p>'],
-    'Centro de ayuda': ['Encuentra respuestas y guías para usar Tareasy.', '<button type="button" class="secondary-button small">Abrir guías</button>'],
-    'Preguntas frecuentes': ['Consulta las respuestas a las dudas más comunes.', '<button type="button" class="secondary-button small">Ver preguntas</button>'],
-    'Enviar mensaje': ['Escribe un mensaje para nuestro equipo de soporte.', '<label class="settings-field">Mensaje<textarea rows="3" placeholder="¿En qué podemos ayudarte?"></textarea></label>'],
-    Email: ['Envía tu consulta directamente por correo electrónico.', '<button type="button" class="secondary-button small">Redactar email</button>'],
-    Chat: ['Conversa con soporte desde la aplicación.', '<button type="button" class="secondary-button small">Iniciar chat</button>'],
+    'Mi cuenta': [translations[currentLanguage].detailCopy.accountPage, `<label class="settings-field">${detailLabels.name}<input type="text" placeholder="${detailLabels.namePlaceholder}" /></label>`],
+    'Administrar perfil': [translations[currentLanguage].detailCopy.manageProfile, `<label class="settings-field">${detailLabels.description}<textarea rows="3" placeholder="${detailLabels.aboutPlaceholder}"></textarea></label>`],
+    'Google Drive': [translations[currentLanguage].detailCopy.drive, `<label class="settings-field">${detailLabels.account}<input type="email" placeholder="${detailLabels.emailPlaceholder}" /></label>`],
+    iCloud: [translations[currentLanguage].detailCopy.icloud, `<label class="settings-field">${detailLabels.apple}<input type="email" placeholder="${detailLabels.emailPlaceholder}" /></label>`],
+    'Sincronizar manual': [translations[currentLanguage].detailCopy.manualSync, `<p class="settings-status">${detailLabels.lastSync}</p>`],
+    'Centro de ayuda': [translations[currentLanguage].detailCopy.help, `<button type="button" class="secondary-button small">${detailLabels.guides}</button>`],
+    'Preguntas frecuentes': [translations[currentLanguage].detailCopy.faq, `<button type="button" class="secondary-button small">${detailLabels.questions}</button>`],
+    'Enviar mensaje': [translations[currentLanguage].detailCopy.sendMessage, `<label class="settings-field">${detailLabels.message}<textarea rows="3" placeholder="${detailLabels.messagePlaceholder}"></textarea></label>`],
+    Email: [translations[currentLanguage].detailCopy.email, `<button type="button" class="secondary-button small">${detailLabels.emailAction}</button>`],
+    Chat: [translations[currentLanguage].detailCopy.chat, `<button type="button" class="secondary-button small">${detailLabels.chatAction}</button>`],
   };
-  const [copy, content] = detailContent[settingName] || ['Configuración específica.', ''];
+  const copy = translations[currentLanguage]?.detailCopy?.[settingKey] || detailContent[settingName]?.[0] || `${t('configuration')} ${settingName}.`;
+  const content = detailContent[settingName]?.[1] || '';
   settingsDetailCopy.textContent = copy;
-  settingsDetailActions.innerHTML = `${content}<button type="button" class="primary-button small">Guardar cambios</button>`;
+  settingsDetailActions.innerHTML = `${content}<button type="button" class="primary-button small">${t('saveChanges')}</button>`;
   settingsDetail.classList.remove('hidden');
   settingsPanel.querySelectorAll('.settings-section').forEach((section) => section.classList.add('hidden'));
   settingsDetail.focus?.();
@@ -165,8 +269,8 @@ function renderSidebarLists() {
         <div class="list-item ${selectedListId === list.id ? 'active' : ''}">
           <button type="button" class="list-select" data-list-id="${list.id}">${sanitizeInput(list.name)}</button>
           <div class="list-actions">
-            <button type="button" class="list-action" data-list-action="rename" data-list-id="${list.id}" aria-label="Renombrar lista">✎</button>
-            <button type="button" class="list-action" data-list-action="delete" data-list-id="${list.id}" aria-label="Eliminar lista">🗑</button>
+            <button type="button" class="list-action" data-list-action="rename" data-list-id="${list.id}" aria-label="${t('edit')}">✎</button>
+            <button type="button" class="list-action" data-list-action="delete" data-list-id="${list.id}" aria-label="${t('remove')}">🗑</button>
           </div>
         </div>
       `,
@@ -217,12 +321,13 @@ function formatDueDate(dateValue) {
     return '';
   }
 
-  return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' }).format(date);
+  const locale = currentLanguage === 'zh' ? 'zh-CN' : currentLanguage;
+  return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(date);
 }
 
 function renderSubtasksEditor() {
   if (!draftSubtasks.length) {
-    subtaskList.innerHTML = '<li class="empty-state">Sin subtareas todavía.</li>';
+    subtaskList.innerHTML = `<li class="empty-state">${t('subtaskEmpty')}</li>`;
     return;
   }
 
@@ -234,7 +339,7 @@ function renderSubtasksEditor() {
             ${subtask.completed ? '✓' : ''}
           </button>
           <span class="subtask-text">${sanitizeInput(subtask.text)}</span>
-          <button type="button" class="task-subtask-delete" data-subtask-action="delete" data-subtask-id="${subtask.id}" aria-label="Eliminar subtarea">×</button>
+          <button type="button" class="task-subtask-delete" data-subtask-action="delete" data-subtask-id="${subtask.id}" aria-label="${t('remove')}">×</button>
         </li>
       `,
     )
@@ -248,7 +353,7 @@ function renderTasks() {
   if (!visibleTasks.length) {
     taskList.innerHTML = `
       <li class="empty-state">
-        No hay tareas en esta vista. Añade una nueva tarea o cambia de lista.
+        ${t('emptyTasks')}
       </li>
     `;
     return;
@@ -266,7 +371,7 @@ function renderTasks() {
               class="task-toggle"
               data-action="toggle"
               data-id="${task.id}"
-              aria-label="${task.completed ? 'Marcar como pendiente' : 'Marcar como completada'}"
+              aria-label="${task.completed ? t('pendingTask') : t('completedTask')}"
             >
               ${task.completed ? '✓' : ''}
             </button>
@@ -274,18 +379,18 @@ function renderTasks() {
             <div class="task-text-wrap">
               <span class="task-text">${sanitizeInput(task.text)}</span>
               <div class="task-meta-row">
-                <span class="task-badge priority-${task.priority}">${priorityLabels[task.priority]}</span>
+                <span class="task-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span>
                 ${dueText ? `<span class="task-badge due-date ${isOverdue ? 'overdue' : ''}">📅 ${dueText}</span>` : ''}
               </div>
             </div>
 
             <div class="task-actions">
-              <button type="button" class="task-more" aria-label="Más opciones" aria-expanded="false">•••</button>
+              <button type="button" class="task-more" aria-label="${t('more')}" aria-expanded="false">•••</button>
               <div class="task-menu hidden">
-                <button type="button" data-action="edit" data-id="${task.id}">Editar</button>
-                <button type="button" data-action="delete" data-id="${task.id}">Eliminar</button>
-                <button type="button" data-action="move-up" data-id="${task.id}">Subir</button>
-                <button type="button" data-action="move-down" data-id="${task.id}">Bajar</button>
+                <button type="button" data-action="edit" data-id="${task.id}">${t('edit')}</button>
+                <button type="button" data-action="delete" data-id="${task.id}">${t('remove')}</button>
+                <button type="button" data-action="move-up" data-id="${task.id}">${t('moveUp')}</button>
+                <button type="button" data-action="move-down" data-id="${task.id}">${t('moveDown')}</button>
               </div>
             </div>
           </div>
@@ -299,7 +404,7 @@ function resetTaskForm() {
   taskForm.reset();
   taskForm.dataset.mode = 'create';
   cancelEditTaskButton.classList.add('hidden');
-  taskInput.placeholder = 'Añadir una tarea...';
+  taskInput.placeholder = t('addTask');
   draftSubtasks = [];
   renderSubtasksEditor();
   if (lists.length) {
@@ -418,9 +523,9 @@ function renderDetailSubtasks() {
         <li class="subtask-item ${subtask.completed ? 'completed' : ''}">
           <button type="button" class="task-subtask-toggle" data-detail-subtask-action="toggle" data-subtask-id="${subtask.id}">${subtask.completed ? '✓' : ''}</button>
           <span class="subtask-text">${sanitizeInput(subtask.text)}</span>
-          <button type="button" class="task-subtask-delete" data-detail-subtask-action="delete" data-subtask-id="${subtask.id}" aria-label="Eliminar subtarea">×</button>
+          <button type="button" class="task-subtask-delete" data-detail-subtask-action="delete" data-subtask-id="${subtask.id}" aria-label="${t('remove')}">×</button>
         </li>`).join('')
-    : '<li class="empty-state">Sin subtareas todavía.</li>';
+    : `<li class="empty-state">${t('subtaskEmpty')}</li>`;
 }
 
 function openTaskDetail(taskId) {
@@ -845,6 +950,12 @@ function bindEvents() {
       return;
     }
 
+    if (menuItem.dataset.language) {
+      currentLanguage = menuItem.dataset.language;
+      persistState();
+      applyTranslations();
+    }
+
     const optionButton = menuItem.closest('.settings-item-group')?.querySelector('.settings-option');
     const valueSpan = optionButton?.querySelector('.settings-value');
     if (valueSpan) {
@@ -865,6 +976,12 @@ function bindEvents() {
     taskOrder = taskSortSelect.value;
     persistState();
     renderTasks();
+  });
+
+  quickLanguageSelect.addEventListener('change', () => {
+    currentLanguage = quickLanguageSelect.value;
+    persistState();
+    applyTranslations();
   });
 
   if (toggleSidebarButton && sidebar) {
@@ -892,6 +1009,7 @@ function bindEvents() {
 function initializeApp() {
   const isDark = currentTheme === 'dark';
   applyTheme(isDark ? 'dark' : 'light');
+  applyTranslations();
   closeSettingsMenu();
 
   if (!lists.length) {

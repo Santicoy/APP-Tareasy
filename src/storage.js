@@ -151,6 +151,7 @@ export function loadAppState() {
 
     return {
       theme: stored.theme === 'dark' ? 'dark' : 'light',
+      language: ['es', 'en', 'zh', 'pt'].includes(stored.language) ? stored.language : 'es',
       lists: normalizedLists,
       tasks: normalizedTasks,
       taskOrder: ['due-asc', 'due-desc', 'name-asc', 'name-desc', 'created-desc', 'manual'].includes(stored.taskOrder)
@@ -166,6 +167,7 @@ export function loadAppState() {
   if (Array.isArray(legacyTasks)) {
     return {
       theme: 'light',
+      language: 'es',
       lists: DEFAULT_LISTS,
       tasks: legacyTasks.map((task) => normalizeTask(task, 'inbox')).filter(Boolean),
       taskOrder: 'created-desc',
@@ -175,6 +177,7 @@ export function loadAppState() {
 
   return {
     theme: 'light',
+    language: 'es',
     lists: DEFAULT_LISTS,
     tasks: [],
     taskOrder: 'created-desc',
@@ -185,6 +188,7 @@ export function loadAppState() {
 export function saveAppState(state) {
   const safeState = {
     theme: state && state.theme === 'dark' ? 'dark' : 'light',
+    language: ['es', 'en', 'zh', 'pt'].includes(state?.language) ? state.language : 'es',
     lists: Array.isArray(state?.lists)
       ? state.lists.map(normalizeList).filter(Boolean)
       : DEFAULT_LISTS,

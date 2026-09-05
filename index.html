@@ -35,6 +35,14 @@
         <button id="theme-toggle" class="icon-button" type="button" aria-label="Cambiar tema">
           ☀️
         </button>
+        <label class="quick-language" aria-label="Cambiar idioma rápidamente">
+          <select id="quick-language-select" aria-label="Cambiar idioma">
+            <option value="es">ES</option>
+            <option value="en">EN</option>
+            <option value="zh">中</option>
+            <option value="pt">PT</option>
+          </select>
+        </label>
         <button id="settings-button" class="icon-button settings-button" type="button" aria-label="Abrir ajustes">
           ⚙️
         </button>
@@ -52,19 +60,19 @@
       <div class="settings-section">
         <h4>Cuenta</h4>
 
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Mi cuenta">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Mi cuenta" data-setting-page-key="accountPage">
           <span>Mi cuenta</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Administrar perfil">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Administrar perfil" data-setting-page-key="manageProfile">
           <span>Administrar perfil</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Google Drive">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Google Drive" data-setting-page-key="drive">
           <span>Google Drive</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="iCloud">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="iCloud" data-setting-page-key="icloud">
           <span>iCloud</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Sincronizar manual">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Sincronizar manual" data-setting-page-key="manualSync">
           <span>Sincronizar manual</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
       </div>
@@ -114,21 +122,37 @@
       </div>
 
       <div class="settings-section">
+        <h4>Idioma</h4>
+        <div class="settings-item-group">
+          <button class="settings-option" type="button" data-setting="language">
+            <span>Idioma</span>
+            <span class="settings-value">Español</span>
+          </button>
+          <div class="settings-menu hidden" aria-label="Opciones de idioma">
+            <button type="button" class="settings-menu-item" data-language="es">Español</button>
+            <button type="button" class="settings-menu-item" data-language="en">English</button>
+            <button type="button" class="settings-menu-item" data-language="zh">中文</button>
+            <button type="button" class="settings-menu-item" data-language="pt">Português</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <h4>Soporte</h4>
 
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Centro de ayuda">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Centro de ayuda" data-setting-page-key="help">
           <span>Centro de ayuda</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Preguntas frecuentes">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Preguntas frecuentes" data-setting-page-key="faq">
           <span>Preguntas frecuentes</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Enviar mensaje">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Enviar mensaje" data-setting-page-key="sendMessage">
           <span>Enviar mensaje</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Email">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Email" data-setting-page-key="email">
           <span>Email</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
-        <button class="settings-option settings-page-link" type="button" data-setting-page="Chat">
+        <button class="settings-option settings-page-link" type="button" data-setting-page="Chat" data-setting-page-key="chat">
           <span>Chat</span><span class="settings-arrow" aria-hidden="true">›</span>
         </button>
       </div>

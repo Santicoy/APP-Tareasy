@@ -877,6 +877,48 @@ body[data-theme='dark'] .bottom-nav {
   }
 }
 
+/* Final overrides prevent legacy mobile rules from clipping the composer. */
+.task-form:focus-within .task-form-meta,
+.task-form[data-mode='edit'] .task-form-meta {
+  max-height: 240px;
+  overflow: visible;
+}
+
+.task-form-meta {
+  overflow: visible;
+}
+
+.quick-language {
+  width: 58px;
+  flex: 0 0 58px;
+}
+
+.quick-language select {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Native select menus need explicit colors in dark mode. */
+body[data-theme='dark'] .task-form-meta select,
+body[data-theme='dark'] .task-form-meta select option {
+  background: #17243a;
+  color: #edf2ff;
+}
+
+body[data-theme='dark'] .task-form-meta select option:checked,
+body[data-theme='dark'] .task-form-meta select option:hover {
+  background: #263b5e;
+  color: #ffffff;
+}
+
+body[data-theme='dark'] .quick-language select,
+body[data-theme='dark'] .quick-language select option {
+  background: #17243a;
+  color: #edf2ff;
+  color-scheme: dark;
+}
+
 /* Final topbar and composer rules, after legacy responsive overrides. */
 .topbar {
   isolation: isolate;
@@ -949,6 +991,121 @@ body[data-theme='dark'] .bottom-nav {
     flex-direction: row;
     align-items: center;
   }
+}
+
+/* Composer controls stay visible and balanced in dark mode. */
+.task-form-meta label {
+  min-height: 44px;
+  border: 1px solid rgba(45, 164, 139, 0.58);
+  background: var(--panel-soft);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.task-form-meta label:hover,
+.task-form-meta label:focus-within {
+  border-color: #46d6b2;
+  box-shadow: 0 0 0 2px rgba(70, 214, 178, 0.12);
+}
+
+.task-form-meta .meta-icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  font-size: 20px;
+}
+
+.task-form-meta input,
+.task-form-meta select {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.task-form-meta input[type='date'] {
+  color-scheme: light;
+  cursor: pointer;
+}
+
+.task-form-meta input[type='date']::-webkit-calendar-picker-indicator {
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+body[data-theme='dark'] .task-form-meta label {
+  border-color: rgba(54, 234, 216, 0.48);
+  background: #17243a;
+}
+
+body[data-theme='dark'] .task-form-meta input,
+body[data-theme='dark'] .task-form-meta select {
+  color: #edf2ff;
+  color-scheme: dark;
+}
+
+body[data-theme='dark'] .task-form-meta input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.7);
+}
+
+.quick-language {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(176, 192, 255, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(5, 12, 45, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.quick-language > span {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.quick-language select {
+  width: 28px;
+  min-height: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quick-language option {
+  color: #111827;
+  background: #ffffff;
+}
+
+/* The stacked metadata controls need room for both icon and field. */
+.task-form:focus-within .task-form-meta,
+.task-form[data-mode='edit'] .task-form-meta {
+  max-height: 240px;
+  overflow: visible;
+}
+
+.task-form-meta {
+  overflow: visible;
+}
+
+.quick-language {
+  width: 58px;
+  flex: 0 0 58px;
+}
+
+.quick-language select {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
 }
 
 /* Shared reference-inspired navigation header for both themes. */
@@ -1786,4 +1943,26 @@ body[data-theme='light'] select {
   .subtask-input-row {
     flex-direction: column;
   }
+}
+
+/* Keep the expanded composer controls fully visible after all responsive rules. */
+.task-form:focus-within .task-form-meta,
+.task-form[data-mode='edit'] .task-form-meta {
+  max-height: 240px;
+  overflow: visible;
+}
+
+.task-form-meta {
+  overflow: visible;
+}
+
+.quick-language {
+  width: 58px;
+  flex: 0 0 58px;
+}
+
+.quick-language select {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
 }
