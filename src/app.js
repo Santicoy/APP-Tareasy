@@ -44,6 +44,10 @@ const taskDetailPanel = document.querySelector('#task-detail-panel');
 const taskDetailOverlay = document.querySelector('#task-detail-overlay');
 const closeTaskDetailButton = document.querySelector('#close-task-detail');
 const taskDetailTitle = document.querySelector('#task-detail-title');
+const deleteListOverlay = document.querySelector('#delete-list-overlay');
+const deleteListDialog = document.querySelector('#delete-list-dialog');
+const cancelDeleteListButton = document.querySelector('#cancel-delete-list');
+const confirmDeleteListButton = document.querySelector('#confirm-delete-list');
 
 const appState = loadAppState();
 let tasks = appState.tasks;
@@ -59,8 +63,10 @@ let taskOrder = appState.taskOrder || 'created-desc';
 let manualTaskOrder = [...(appState.manualTaskOrder || [])];
 let touchStartX = 0;
 let touchStartY = 0;
+let pendingDeleteListId = null;
 
 const priorityLabels = {
+  '': 'noPriority',
   alta: 'high',
   media: 'medium',
   baja: 'low',
@@ -93,7 +99,22 @@ const translations = {
 };
 
 function t(key) {
-  return translations[currentLanguage]?.[key] ?? translations.es[key] ?? key;
+  const fallbackLabels = {
+    noPriority: { es: 'Sin prioridad', en: 'No priority', zh: '无优先级', pt: 'Sem prioridade' },
+    noList: { es: 'Sin lista', en: 'No list', zh: '无列表', pt: 'Sem lista' },
+    editList: { es: 'Editar lista', en: 'Edit list', zh: '编辑列表', pt: 'Editar lista' },
+    removeList: { es: 'Eliminar lista', en: 'Delete list', zh: '删除列表', pt: 'Excluir lista' },
+    renameListPrompt: { es: 'Renombrar lista', en: 'Rename list', zh: '重命名列表', pt: 'Renomear lista' },
+    clear: { es: 'Borrar', en: 'Clear', zh: '清除', pt: 'Limpar' },
+    listOptions: { es: 'Opciones de lista', en: 'List options', zh: '列表选项', pt: 'Opções da lista' },
+    moveRight: { es: 'Mover a la derecha', en: 'Move right', zh: '向右移动', pt: 'Mover para a direita' },
+    moveLeft: { es: 'Mover a la izquierda', en: 'Move left', zh: '向左移动', pt: 'Mover para a esquerda' },
+    scrollListsLeft: { es: 'Desplazar listas a la izquierda', en: 'Scroll lists left', zh: '向左滚动列表', pt: 'Rolar listas para a esquerda' },
+    scrollListsRight: { es: 'Desplazar listas a la derecha', en: 'Scroll lists right', zh: '向右滚动列表', pt: 'Rolar listas para a direita' },
+    deleteListTitle: { es: '¿Eliminar lista?', en: 'Delete list?', zh: '删除列表？', pt: 'Excluir lista?' },
+    deleteListCopy: { es: '¿Seguro que deseas eliminar la lista? Esta acción no se puede deshacer', en: 'Are you sure you want to delete this list? This action cannot be undone', zh: '确定要删除此列表吗？此操作无法撤销', pt: 'Tem certeza de que deseja excluir esta lista? Esta ação não pode ser desfeita' },
+  };
+  return translations[currentLanguage]?.[key] ?? translations.es[key] ?? fallbackLabels[key]?.[currentLanguage] ?? key;
 }
 
 function dateLabel(key) {
@@ -160,6 +181,21 @@ function applyTranslations() {
   document.querySelector('#task-priority option[value="baja"]').textContent = t('low');
   document.querySelector('#task-priority option[value="media"]').textContent = t('medium');
   document.querySelector('#task-priority option[value="alta"]').textContent = t('high');
+  document.querySelector('#task-priority option[value=""]').textContent = t('noPriority');
+  const metaLabels = { 'task-due-date': 'dueDate', 'task-due-time': 'dueTime', 'task-priority': 'priority', 'task-list-select': 'list' };
+  document.querySelectorAll('[data-clear-control]').forEach((button) => {
+    const labelKey = metaLabels[button.dataset.clearControl];
+    button.setAttribute('aria-label', `${t('clear')} ${labelKey ? t(labelKey) : ''}`.trim());
+  });
+  document.querySelector('[data-list-action="rename-selected"]')?.setAttribute('aria-label', t('editList'));
+  document.querySelector('[data-list-action="delete-selected"]')?.setAttribute('aria-label', t('removeList'));
+  document.querySelector('[data-list-scroll="left"]')?.setAttribute('aria-label', t('scrollListsLeft'));
+  document.querySelector('[data-list-scroll="right"]')?.setAttribute('aria-label', t('scrollListsRight'));
+  document.querySelectorAll('[data-add-list]').forEach((button) => button.setAttribute('aria-label', t('newList')));
+  document.querySelector('#delete-list-title').textContent = t('deleteListTitle');
+  document.querySelector('#delete-list-copy').textContent = t('deleteListCopy');
+  cancelDeleteListButton.textContent = t('cancel');
+  confirmDeleteListButton.textContent = t('remove');
   document.querySelector('#subtask-input').placeholder = t('addSubtask');
   document.querySelector('#add-subtask-button').textContent = t('add');
   document.querySelector('#cancel-edit-task').textContent = t('cancel');
@@ -272,13 +308,13 @@ function closeSettingsDetail() {
 }
 
 function renderListOptions() {
-  taskListSelect.innerHTML = lists
+  taskListSelect.innerHTML = `<option value="">${t('noList')}</option>${lists
     .map(
       (list) => `
         <option value="${list.id}" ${selectedListId === list.id ? 'selected' : ''}>${sanitizeInput(list.name)}</option>
       `,
     )
-    .join('');
+    .join('')}`;
 
   if (!taskListSelect.value && lists.length) {
     taskListSelect.value = lists[0].id;
@@ -289,16 +325,35 @@ function renderSidebarLists() {
   listList.innerHTML = lists
     .map(
       (list) => `
-        <div class="list-item ${selectedListId === list.id ? 'active' : ''}">
+        <div class="list-tab ${selectedListId === list.id ? 'active' : ''}">
           <button type="button" class="list-select" data-list-id="${list.id}">${sanitizeInput(list.name)}</button>
           <div class="list-actions">
-            <button type="button" class="list-action" data-list-action="rename" data-list-id="${list.id}" aria-label="${t('edit')}">✎</button>
-            <button type="button" class="list-action" data-list-action="delete" data-list-id="${list.id}" aria-label="${t('remove')}">🗑</button>
+            <button type="button" class="list-more-button" data-list-action="toggle-menu" data-list-id="${list.id}" aria-label="${t('listOptions')}" aria-expanded="false">•••</button>
+            <div class="list-tab-menu hidden">
+              <button type="button" data-list-action="rename" data-list-id="${list.id}">${t('editList')}</button>
+              <button type="button" data-list-action="delete" data-list-id="${list.id}">${t('removeList')}</button>
+              <button type="button" data-list-action="move-right" data-list-id="${list.id}">${t('moveRight')}</button>
+              <button type="button" data-list-action="move-left" data-list-id="${list.id}">${t('moveLeft')}</button>
+            </div>
           </div>
         </div>
       `,
     )
     .join('');
+
+  document.querySelectorAll('.selected-list-manage').forEach((button) => {
+    button.classList.toggle('hidden', selectedListId === 'all');
+    button.disabled = selectedListId === 'all';
+  });
+
+  updateListScrollControls();
+}
+
+function updateListScrollControls() {
+  const hasOverflow = listList.scrollWidth > listList.clientWidth + 1;
+  document.querySelectorAll('[data-list-scroll]').forEach((button) => {
+    button.classList.toggle('hidden', !hasOverflow);
+  });
 }
 
 function getVisibleTasks() {
@@ -422,7 +477,7 @@ function renderTasks() {
             <div class="task-text-wrap">
               <span class="task-text">${sanitizeInput(task.text)}</span>
               <div class="task-meta-row">
-                <span class="task-badge priority-${task.priority}">${getPriorityLabel(task.priority)}</span>
+                <span class="task-badge priority-${task.priority || 'none'}">${getPriorityLabel(task.priority)}</span>
                 ${dueText ? `<span class="task-badge due-date ${isOverdue ? 'overdue' : ''}">📅 ${dueText}${timeText}</span>` : ''}
               </div>
             </div>
@@ -445,6 +500,7 @@ function renderTasks() {
 
 function resetTaskForm() {
   taskForm.reset();
+  taskPriority.value = '';
   taskForm.dataset.mode = 'create';
   cancelEditTaskButton.classList.add('hidden');
   taskInput.placeholder = t('addTask');
@@ -467,7 +523,7 @@ function openTaskEditor(taskId) {
   taskInput.value = task.text;
   taskDueDate.value = task.dueDate || '';
   taskDueTime.value = task.dueTime || '';
-  taskPriority.value = task.priority || 'media';
+  taskPriority.value = task.priority ?? '';
   taskListSelect.value = task.listId || lists[0].id;
   draftSubtasks = Array.isArray(task.subtasks) ? [...task.subtasks] : [];
   renderSubtasksEditor();
@@ -526,7 +582,7 @@ function submitTask(event) {
     createdAt: editingTaskId ? tasks.find((task) => task.id === editingTaskId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
     dueDate: taskDueDate.value || '',
     dueTime: taskDueTime.value || '',
-    priority: taskPriority.value || 'media',
+    priority: taskPriority.value,
     listId: selectedList,
     subtasks: draftSubtasks,
   };
@@ -741,7 +797,7 @@ function handleTaskSubtaskAction(event) {
 }
 
 function createList(name) {
-  const cleanName = sanitizeInput(name);
+  const cleanName = sanitizeInput(name).slice(0, 30);
   if (!cleanName) {
     return;
   }
@@ -762,7 +818,7 @@ function createList(name) {
 }
 
 function renameList(listId, newName) {
-  const cleanName = sanitizeInput(newName);
+  const cleanName = sanitizeInput(newName).slice(0, 30);
   if (!cleanName) {
     return;
   }
@@ -781,8 +837,43 @@ function renameList(listId, newName) {
   renderTasks();
 }
 
+function moveList(listId, direction) {
+  const currentIndex = lists.findIndex((list) => list.id === listId);
+  const nextIndex = currentIndex + direction;
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= lists.length) {
+    return;
+  }
+
+  const nextLists = [...lists];
+  [nextLists[currentIndex], nextLists[nextIndex]] = [nextLists[nextIndex], nextLists[currentIndex]];
+  lists = nextLists;
+  persistState();
+  renderSidebarLists();
+  renderListOptions();
+}
+
 function deleteList(listId) {
   if (lists.length <= 1 || listId === 'inbox') {
+    return;
+  }
+
+  pendingDeleteListId = listId;
+  deleteListDialog.classList.remove('hidden');
+  deleteListOverlay.classList.remove('hidden');
+  deleteListOverlay.setAttribute('aria-hidden', 'false');
+  confirmDeleteListButton.focus();
+}
+
+function closeDeleteListDialog() {
+  pendingDeleteListId = null;
+  deleteListDialog.classList.add('hidden');
+  deleteListOverlay.classList.add('hidden');
+  deleteListOverlay.setAttribute('aria-hidden', 'true');
+}
+
+function confirmDeleteList() {
+  const listId = pendingDeleteListId;
+  if (!listId) {
     return;
   }
 
@@ -802,10 +893,13 @@ function deleteList(listId) {
   renderListOptions();
   updateFilterButtons();
   renderTasks();
+  closeDeleteListDialog();
 }
 
 function onFilterChange(nextFilter) {
-  if (nextFilter !== 'all-lists' && selectedListId === 'all' && lists.length) {
+  if (nextFilter === 'all-lists') {
+    selectedListId = 'all';
+  } else if (selectedListId === 'all' && lists.length) {
     selectedListId = lists[0].id;
   }
   activeFilter = nextFilter;
@@ -855,14 +949,35 @@ function handleSidebarListActions(event) {
     return;
   }
 
-  const { listAction, listId } = listButton.dataset;
+  const { listAction } = listButton.dataset;
+  if (listAction.endsWith('-selected') && selectedListId === 'all') {
+    return;
+  }
+  const listId = listButton.dataset.listId || selectedListId;
   if (!listId) {
+    return;
+  }
+
+  if (listAction === 'toggle-menu') {
+    const menu = listButton.closest('.list-actions')?.querySelector('.list-tab-menu');
+    const isOpen = menu && !menu.classList.contains('hidden');
+    document.querySelectorAll('.list-tab-menu').forEach((item) => item.classList.add('hidden'));
+    document.querySelectorAll('[data-list-action="toggle-menu"]').forEach((item) => item.setAttribute('aria-expanded', 'false'));
+    if (menu && !isOpen) {
+      const tabRect = listButton.closest('.list-tab')?.getBoundingClientRect();
+      if (tabRect) {
+        menu.style.top = `${tabRect.bottom + 4}px`;
+        menu.style.left = `${Math.max(8, tabRect.right - 170)}px`;
+      }
+      menu.classList.remove('hidden');
+      listButton.setAttribute('aria-expanded', 'true');
+    }
     return;
   }
 
   if (listAction === 'rename') {
     const list = getListById(listId);
-    const nextName = window.prompt('Renombrar lista', list?.name || '');
+    const nextName = window.prompt(t('renameListPrompt'), list?.name || '');
     if (nextName !== null) {
       renameList(listId, nextName);
     }
@@ -871,13 +986,46 @@ function handleSidebarListActions(event) {
   if (listAction === 'delete') {
     deleteList(listId);
   }
+
+  if (listAction === 'move-right') {
+    moveList(listId, 1);
+  }
+
+  if (listAction === 'move-left') {
+    moveList(listId, -1);
+  }
+
+  if (listAction === 'rename-selected') {
+    const list = getListById(selectedListId);
+    const nextName = window.prompt(t('renameListPrompt'), list?.name || '');
+    if (nextName !== null) {
+      renameList(selectedListId, nextName);
+    }
+  }
+
+  if (listAction === 'delete-selected') {
+    deleteList(selectedListId);
+  }
+
+  document.querySelectorAll('.list-tab-menu').forEach((menu) => menu.classList.add('hidden'));
 }
 
 function bindEvents() {
   taskForm.addEventListener('submit', submitTask);
+  taskForm.addEventListener('click', (event) => {
+    const clearButton = event.target.closest('[data-clear-control]');
+    if (!clearButton) return;
+    const control = document.querySelector(`#${clearButton.dataset.clearControl}`);
+    if (!control) return;
+    control.value = '';
+    if (control !== taskListSelect) {
+      control.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    control.focus();
+  });
   taskForm.querySelectorAll('.task-form-meta > label').forEach((metaLabel) => {
     metaLabel.addEventListener('click', (event) => {
-      if (event.target.matches('input, select, option')) {
+      if (event.target.matches('input, select, option, button') || event.target.closest('[data-clear-control]')) {
         return;
       }
 
@@ -921,12 +1069,15 @@ function bindEvents() {
     listForm.classList.add('hidden');
   });
 
-  addListButton.addEventListener('click', () => {
+  const openListForm = () => {
     listForm.classList.toggle('hidden');
     if (!listForm.classList.contains('hidden')) {
       listInput.focus();
     }
-  });
+  };
+
+  addListButton.addEventListener('click', openListForm);
+  document.querySelectorAll('[data-add-list]').forEach((button) => button.addEventListener('click', openListForm));
 
   cancelListButton.addEventListener('click', () => {
     listForm.classList.add('hidden');
@@ -948,6 +1099,16 @@ function bindEvents() {
   });
 
   listList.addEventListener('click', handleSidebarListActions);
+  document.querySelector('.selected-list-actions')?.addEventListener('click', handleSidebarListActions);
+  document.querySelectorAll('[data-list-scroll]').forEach((button) => {
+    button.addEventListener('click', () => {
+      listList.scrollBy({ left: button.dataset.listScroll === 'right' ? 220 : -220, behavior: 'smooth' });
+    });
+  });
+  window.addEventListener('resize', updateListScrollControls);
+  cancelDeleteListButton.addEventListener('click', closeDeleteListDialog);
+  confirmDeleteListButton.addEventListener('click', confirmDeleteList);
+  deleteListOverlay.addEventListener('click', closeDeleteListDialog);
 
   cancelEditTaskButton.addEventListener('click', resetTaskForm);
 
@@ -963,6 +1124,7 @@ function bindEvents() {
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
+        closeDeleteListDialog();
         closeSettingsMenu();
         closeTaskDetail();
         sidebar?.classList.remove('open');
@@ -1031,7 +1193,7 @@ function bindEvents() {
   });
 
   taskListSelect.addEventListener('change', () => {
-    if (taskForm.dataset.mode === 'create') {
+    if (taskForm.dataset.mode === 'create' && taskListSelect.value) {
       selectedListId = taskListSelect.value; 
     }
   });

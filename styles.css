@@ -582,6 +582,12 @@ body[data-theme='dark'] .task-item {
   color: var(--success);
 }
 
+.task-badge.priority-none {
+  background: var(--panel-soft);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
 .task-badge.due-date {
   background: var(--panel-soft);
   color: var(--text-muted);
@@ -1246,6 +1252,283 @@ body[data-theme='dark'] .task-form-meta input[type='date']::-webkit-calendar-pic
   max-height: 30px;
   padding: 0.1rem;
   font-size: 10px;
+}
+
+.task-form-meta > label {
+  position: relative;
+  padding-right: 1.25rem;
+}
+
+.clear-meta-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.clear-meta-button:hover,
+.clear-meta-button:focus-visible {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+  opacity: 1;
+}
+
+.list-section {
+  margin: 0 0 1rem;
+  padding: 0;
+  gap: 0.45rem;
+}
+
+.section-header {
+  min-height: 26px;
+  padding: 0 0.15rem;
+}
+
+.selected-list-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+}
+
+.selected-list-actions .list-action,
+.add-list-tab {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.selected-list-actions .list-action {
+  color: var(--text-muted);
+}
+
+.selected-list-actions .list-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.list-action.danger {
+  color: var(--danger);
+}
+
+.list-tabs {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: 0.35rem;
+  overflow-x: auto;
+  min-height: 42px;
+  min-width: 0;
+  padding: 0.2rem 0.25rem;
+  scrollbar-width: thin;
+}
+
+.list-tabs-frame {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 92%, var(--primary-soft));
+}
+
+.list-scroll-button {
+  flex: 0 0 28px;
+  width: 28px;
+  min-height: 30px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.list-scroll-button:hover,
+.list-scroll-button:focus-visible {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.inline-add-list {
+  flex: 0 0 30px;
+  margin-right: 0.25rem;
+}
+
+.list-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 32px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--text-muted));
+  border-radius: 7px;
+  background: transparent;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.list-tab:hover,
+.list-tab:focus-within {
+  background: var(--panel-soft);
+  border-color: var(--border);
+}
+
+.list-tab.active {
+  background: var(--primary-soft);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.list-tab .list-select {
+  display: block;
+  overflow: hidden;
+  max-width: clamp(100px, 22vw, 220px);
+  min-height: 30px;
+  padding: 0.3rem 0.65rem;
+  color: var(--text);
+  font-size: 0.82rem;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.list-tab .list-actions {
+  position: relative;
+  display: none;
+  align-items: center;
+}
+
+.list-tab:hover .list-actions,
+.list-tab:focus-within .list-actions {
+  display: inline-flex;
+}
+
+.list-more-button {
+  width: 26px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.list-more-button:hover,
+.list-more-button:focus-visible {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.list-tab-menu {
+  position: fixed;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.list-tab-menu button {
+  min-height: 34px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.list-tab-menu button:hover,
+.list-tab-menu button:focus-visible {
+  background: var(--primary-soft);
+}
+
+.delete-list-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 90;
+  width: min(92vw, 380px);
+  transform: translate(-50%, -50%);
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.delete-list-dialog h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+
+.delete-list-dialog p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.delete-list-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.15rem;
+}
+
+.delete-confirm-button {
+  min-height: 36px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.list-form {
+  margin-top: 0.65rem;
+  padding-top: 0;
+}
+
+@media (max-width: 767px) {
+  .list-section {
+    margin-bottom: 0.75rem;
+  }
+
+  .task-form-meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .task-form-meta > label {
+    min-height: 48px;
+    height: 48px;
+  }
+
+  .task-form-meta > label input,
+  .task-form-meta > label select {
+    font-size: 9px;
+  }
 }
 
 .quick-language,

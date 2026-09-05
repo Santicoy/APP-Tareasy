@@ -175,22 +175,6 @@
             <button class="nav-item" type="button" data-filter="completed">Completadas</button>
           </div>
 
-          <div class="list-section">
-            <div class="section-header">
-              <span>Listas</span>
-              <button id="add-list-button" class="mini-button" type="button" aria-label="Crear lista">＋</button>
-            </div>
-            <div id="list-list" class="list-list" aria-live="polite"></div>
-
-            <form id="list-form" class="list-form hidden" autocomplete="off">
-              <label class="sr-only" for="list-input">Nombre de la lista</label>
-              <input id="list-input" name="list" type="text" maxlength="40" placeholder="Nueva lista" />
-              <div class="list-form-actions">
-                <button type="submit" class="primary-button small">Guardar</button>
-                <button type="button" class="secondary-button small" id="cancel-list-button">Cancelar</button>
-              </div>
-            </form>
-          </div>
         </nav>
       </aside>
 
@@ -215,6 +199,32 @@
           </div>
         </div>
 
+        <section class="list-section" aria-label="Listas de tareas">
+          <div class="section-header">
+            <span>Listas</span>
+          </div>
+          <div class="list-tabs-frame">
+            <button type="button" class="list-scroll-button" data-list-scroll="left" aria-label="Desplazar listas a la izquierda">‹</button>
+            <div id="list-list" class="list-tabs" aria-live="polite"></div>
+            <button type="button" class="list-scroll-button" data-list-scroll="right" aria-label="Desplazar listas a la derecha">›</button>
+            <button type="button" class="mini-button add-list-tab inline-add-list" data-add-list aria-label="Crear lista">＋</button>
+          </div>
+          <div class="selected-list-actions" aria-label="Acciones de la lista seleccionada">
+            <button type="button" class="list-action selected-list-manage" data-list-action="rename-selected" aria-label="Editar lista">✎</button>
+            <button type="button" class="list-action danger selected-list-manage" data-list-action="delete-selected" aria-label="Eliminar lista">🗑</button>
+            <button id="add-list-button" class="mini-button add-list-tab" type="button" aria-label="Crear lista">＋</button>
+          </div>
+
+          <form id="list-form" class="list-form hidden" autocomplete="off">
+            <label class="sr-only" for="list-input">Nombre de la lista</label>
+            <input id="list-input" name="list" type="text" maxlength="30" placeholder="Nueva lista" />
+            <div class="list-form-actions">
+              <button type="submit" class="primary-button small">Guardar</button>
+              <button type="button" class="secondary-button small" id="cancel-list-button">Cancelar</button>
+            </div>
+          </form>
+        </section>
+
         <section class="composer" aria-label="Crear o editar tarea">
           <form id="task-form" class="task-form" data-mode="create">
             <div class="task-form-header">
@@ -235,20 +245,23 @@
                 <span class="meta-icon" aria-hidden="true">📅</span>
                 <span class="sr-only">Fecha de vencimiento</span>
                 <input id="task-due-date" name="dueDate" type="date" />
+                <button type="button" class="clear-meta-button" data-clear-control="task-due-date" aria-label="Borrar fecha">×</button>
               </label>
 
               <label>
                 <span class="meta-icon" aria-hidden="true">◷</span>
                 <span class="sr-only">Hora de vencimiento</span>
                 <input id="task-due-time" name="dueTime" type="time" />
+                <button type="button" class="clear-meta-button" data-clear-control="task-due-time" aria-label="Borrar hora">×</button>
               </label>
 
               <label>
                 <span class="meta-icon" aria-hidden="true">⚑</span>
                 <span class="sr-only">Prioridad</span>
                 <select id="task-priority" name="priority">
+                  <option value="">Sin prioridad</option>
                   <option value="baja">Baja</option>
-                  <option value="media" selected>Media</option>
+                  <option value="media">Media</option>
                   <option value="alta">Alta</option>
                 </select>
               </label>
@@ -257,6 +270,7 @@
                 <span class="meta-icon" aria-hidden="true">☷</span>
                 <span class="sr-only">Lista</span>
                 <select id="task-list-select" name="list"></select>
+                <button type="button" class="clear-meta-button" data-clear-control="task-list-select" aria-label="Borrar lista">×</button>
               </label>
             </div>
 
@@ -286,6 +300,16 @@
           <button type="button" id="add-subtask-button" class="secondary-button">Añadir</button>
         </div>
         <ul id="subtask-list" class="subtask-list" aria-live="polite"></ul>
+      </div>
+    </section>
+
+    <div id="delete-list-overlay" class="settings-overlay hidden" aria-hidden="true"></div>
+    <section id="delete-list-dialog" class="delete-list-dialog hidden" role="alertdialog" aria-modal="true" aria-labelledby="delete-list-title" aria-describedby="delete-list-copy">
+      <h3 id="delete-list-title">¿Eliminar lista?</h3>
+      <p id="delete-list-copy">¿Seguro que deseas eliminar la lista? Esta acción no se puede deshacer</p>
+      <div class="delete-list-actions">
+        <button id="cancel-delete-list" type="button" class="secondary-button small">Cancelar</button>
+        <button id="confirm-delete-list" type="button" class="delete-confirm-button small">Eliminar</button>
       </div>
     </section>
 

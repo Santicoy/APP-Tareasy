@@ -3,7 +3,7 @@ import { sanitizeInput } from './security.js';
 const STORAGE_KEY = 'tareasy.app.v2';
 const LEGACY_TASKS_KEY = 'tareasy.tasks.v1';
 const DEFAULT_LISTS = [{ id: 'inbox', name: 'Inbox' }];
-const PRIORITY_LEVELS = ['alta', 'media', 'baja'];
+const PRIORITY_LEVELS = ['', 'alta', 'media', 'baja'];
 
 function readFromStorage(key) {
   try {
@@ -99,7 +99,7 @@ function normalizeList(list) {
     return null;
   }
 
-  const name = sanitizeInput(typeof list.name === 'string' ? list.name : '');
+  const name = sanitizeInput(typeof list.name === 'string' ? list.name : '').slice(0, 30);
   if (!name) {
     return null;
   }
