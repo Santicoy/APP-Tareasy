@@ -22,6 +22,9 @@
       </div>
 
       <div class="topbar-actions">
+        <button id="streak-counter" class="streak-counter" type="button" aria-label="Racha actual" title="Racha de días completando tareas">
+          <span aria-hidden="true">🔥</span><span id="streak-value">0</span>
+        </button>
         <button
           id="toggle-sidebar"
           class="icon-button mobile-menu-button"
@@ -197,6 +200,11 @@
               </select>
             </label>
           </div>
+          <button id="focus-mode-toggle" class="focus-mode-toggle" type="button" aria-pressed="false">
+            <span aria-hidden="true">✦</span> Hoy y ahora
+            <span id="focus-mode-indicator" class="focus-mode-indicator hidden">Activo</span>
+          </button>
+          <button id="add-pomodoro" class="add-pomodoro-button" type="button">＋ Nuevo Pomodoro</button>
         </div>
 
         <section class="list-section" aria-label="Listas de tareas">
@@ -263,13 +271,19 @@
                   <option value="baja">Baja</option>
                   <option value="media">Media</option>
                   <option value="alta">Alta</option>
+                  <option value="__add__" class="add-option">AÑADIR</option>
                 </select>
+                <button type="button" class="custom-select-trigger" data-custom-select="priority">Seleccionar prioridad</button>
+                <button type="button" id="edit-priority-option" class="edit-select-option" aria-label="Editar prioridad">✎</button>
+                <div id="priority-color-picker" class="priority-color-picker hidden" aria-label="Elegir color de prioridad"></div>
               </label>
 
               <label>
                 <span class="meta-icon" aria-hidden="true">☷</span>
                 <span class="sr-only">Lista</span>
                 <select id="task-list-select" name="list"></select>
+                <button type="button" class="custom-select-trigger" data-custom-select="list">Seleccionar lista</button>
+                <button type="button" id="edit-list-option" class="edit-select-option" aria-label="Editar lista">✎</button>
                 <button type="button" class="clear-meta-button" data-clear-control="task-list-select" aria-label="Borrar lista">×</button>
               </label>
             </div>
@@ -312,6 +326,20 @@
         <button id="confirm-delete-list" type="button" class="delete-confirm-button small">Eliminar</button>
       </div>
     </section>
+
+    <div id="pomodoro-widgets">
+    <aside id="pomodoro-widget" class="pomodoro-widget" data-pomodoro-id="1" aria-label="Temporizador Pomodoro">
+      <div class="pomodoro-heading"><span class="pomodoro-heading-left"><button type="button" class="pomodoro-minimize" aria-label="Minimizar">⌄</button><span id="pomodoro-title">Pomodoro</span></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button type="button" class="pomodoro-close" aria-label="Cerrar Pomodoro">×</button></span></div>
+      <strong id="pomodoro-time" class="pomodoro-time">25:00</strong>
+      <button id="pomodoro-task" class="pomodoro-task" type="button">Sin tarea vinculada</button>
+      <label class="pomodoro-duration" for="pomodoro-minutes"><span id="pomodoro-duration-label">Duración</span><input id="pomodoro-minutes" type="number" min="1" max="180" value="25" inputmode="numeric" /><span id="pomodoro-minutes-label">min</span></label>
+      <div class="pomodoro-options"><select class="pomodoro-size" aria-label="Tamaño"><option value="normal">Mediano</option><option value="small">Pequeño</option><option value="large">Grande</option></select></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-play" class="pomodoro-play" type="button" aria-label="Iniciar temporizador">▶</button>
+        <button id="pomodoro-reset" class="pomodoro-reset" type="button" aria-label="Reiniciar temporizador">↺</button>
+      </div>
+    </aside>
+    </div>
 
     <nav class="bottom-nav" aria-label="Navegación inferior">
       <button class="bottom-nav-item active" type="button" data-filter="all-lists">Todas</button>

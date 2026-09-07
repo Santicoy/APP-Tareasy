@@ -48,6 +48,24 @@ const deleteListOverlay = document.querySelector('#delete-list-overlay');
 const deleteListDialog = document.querySelector('#delete-list-dialog');
 const cancelDeleteListButton = document.querySelector('#cancel-delete-list');
 const confirmDeleteListButton = document.querySelector('#confirm-delete-list');
+const focusModeToggle = document.querySelector('#focus-mode-toggle');
+const focusModeIndicator = document.querySelector('#focus-mode-indicator');
+const streakValue = document.querySelector('#streak-value');
+const pomodoroTime = document.querySelector('#pomodoro-time');
+const pomodoroTask = document.querySelector('#pomodoro-task');
+const pomodoroPlay = document.querySelector('#pomodoro-play');
+const pomodoroReset = document.querySelector('#pomodoro-reset');
+const pomodoroClose = document.querySelector('#pomodoro-widget .pomodoro-close');
+const pomodoroWidget = document.querySelector('#pomodoro-widget');
+const pomodoroMinutes = document.querySelector('#pomodoro-minutes');
+const pomodoroTitle = document.querySelector('#pomodoro-title');
+const pomodoroDurationLabel = document.querySelector('#pomodoro-duration-label');
+const pomodoroMinutesLabel = document.querySelector('#pomodoro-minutes-label');
+const addPomodoroButton = document.querySelector('#add-pomodoro');
+const pomodoroWidgets = document.querySelector('#pomodoro-widgets');
+const editPriorityOptionButton = document.querySelector('#edit-priority-option');
+const editListOptionButton = document.querySelector('#edit-list-option');
+const priorityColorPicker = document.querySelector('#priority-color-picker');
 
 const appState = loadAppState();
 let tasks = appState.tasks;
@@ -64,6 +82,30 @@ let manualTaskOrder = [...(appState.manualTaskOrder || [])];
 let touchStartX = 0;
 let touchStartY = 0;
 let pendingDeleteListId = null;
+let focusModeActive = false;
+let pomodoroSeconds = 25 * 60;
+let pomodoroDuration = 25;
+let pomodoroTimer = null;
+let pomodoroTaskId = null;
+let primaryPomodoroVisible = true;
+const STREAK_STORAGE_KEY = 'tareasy.streak.v1';
+const POMODORO_POSITION_STORAGE_KEY = 'tareasy.pomodoro-position.v1';
+const PRIORITY_OPTIONS_STORAGE_KEY = 'tareasy.priority-options.v1';
+const priorityColors = ['#111827', '#ef4444', '#f97316', '#facc15', '#22c55e', '#22d3ee', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff'];
+let priorityOptions = loadPriorityOptions();
+let extraPomodoros = [];
+
+function loadPriorityOptions() {
+  const defaults = [
+    { id: 'alta', name: 'Alta', color: '#ef4444' }, { id: 'media', name: 'Media', color: '#f59e0b' }, { id: 'baja', name: 'Baja', color: '#10b981' },
+  ];
+  try {
+    const saved = JSON.parse(localStorage.getItem(PRIORITY_OPTIONS_STORAGE_KEY));
+    return Array.isArray(saved) && saved.length ? saved : defaults;
+  } catch { return defaults; }
+}
+
+function savePriorityOptions() { localStorage.setItem(PRIORITY_OPTIONS_STORAGE_KEY, JSON.stringify(priorityOptions)); }
 
 const priorityLabels = {
   '': 'noPriority',
@@ -100,6 +142,14 @@ const translations = {
 
 function t(key) {
   const fallbackLabels = {
+    pomodoro: { es: 'Pomodoro', en: 'Pomodoro', zh: '番茄钟', pt: 'Pomodoro' },
+    noPomodoroTask: { es: 'Sin tarea vinculada', en: 'No linked task', zh: '未关联任务', pt: 'Nenhuma tarefa vinculada' },
+    duration: { es: 'Duración', en: 'Duration', zh: '时长', pt: 'Duração' },
+    minutes: { es: 'min', en: 'min', zh: '分钟', pt: 'min' },
+    startPomodoro: { es: 'Iniciar temporizador', en: 'Start timer', zh: '开始计时器', pt: 'Iniciar temporizador' },
+    pausePomodoro: { es: 'Pausar temporizador', en: 'Pause timer', zh: '暂停计时器', pt: 'Pausar temporizador' },
+    resetPomodoro: { es: 'Reiniciar temporizador', en: 'Reset timer', zh: '重置计时器', pt: 'Redefinir temporizador' },
+    linkPomodoro: { es: 'Vincular al Pomodoro', en: 'Link to Pomodoro', zh: '关联到番茄钟', pt: 'Vincular ao Pomodoro' },
     noPriority: { es: 'Sin prioridad', en: 'No priority', zh: '无优先级', pt: 'Sem prioridade' },
     noList: { es: 'Sin lista', en: 'No list', zh: '无列表', pt: 'Sem lista' },
     editList: { es: 'Editar lista', en: 'Edit list', zh: '编辑列表', pt: 'Editar lista' },
@@ -204,8 +254,15 @@ function applyTranslations() {
   document.querySelector('#close-task-detail').setAttribute('aria-label', t('cancel'));
   document.querySelector('#task-detail-panel .eyebrow').textContent = t('detail');
   document.querySelector('#settings-back').textContent = t('backSettings');
+  pomodoroTitle.textContent = t('pomodoro');
+  pomodoroDurationLabel.textContent = t('duration');
+  pomodoroMinutesLabel.textContent = t('minutes');
+  pomodoroReset.setAttribute('aria-label', t('resetPomodoro'));
+  renderPomodoro();
+  renderExtraPomodoros();
   renderSidebarLists();
   renderListOptions();
+  renderPriorityOptions();
   renderTasks();
 }
 
@@ -213,8 +270,301 @@ function persistState() {
   saveAppState({ theme: currentTheme, language: currentLanguage, lists, tasks, taskOrder, manualTaskOrder });
 }
 
+function getStreakState() {
+  try { return JSON.parse(localStorage.getItem(STREAK_STORAGE_KEY)) || { count: 0, lastCompletedDate: '' }; }
+  catch { return { count: 0, lastCompletedDate: '' }; }
+}
+
+function updateStreakDisplay() {
+  const streak = getStreakState();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  streakValue.textContent = [getLocalDateKey(), getLocalDateKey(yesterday)].includes(streak.lastCompletedDate) ? String(streak.count) : '0';
+}
+
+function recordTaskCompletion() {
+  const today = getLocalDateKey();
+  const streak = getStreakState();
+  if (streak.lastCompletedDate === today) return;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  streak.count = streak.lastCompletedDate === getLocalDateKey(yesterday) ? streak.count + 1 : 1;
+  streak.lastCompletedDate = today;
+  localStorage.setItem(STREAK_STORAGE_KEY, JSON.stringify(streak));
+  updateStreakDisplay();
+}
+
+function updateFocusMode() {
+  focusModeToggle.classList.toggle('active', focusModeActive);
+  focusModeToggle.setAttribute('aria-pressed', String(focusModeActive));
+  focusModeIndicator.classList.toggle('hidden', !focusModeActive);
+}
+
+function renderPomodoro() {
+  pomodoroTime.textContent = `${String(Math.floor(pomodoroSeconds / 60)).padStart(2, '0')}:${String(pomodoroSeconds % 60).padStart(2, '0')}`;
+  pomodoroTask.textContent = tasks.find((item) => item.id === pomodoroTaskId)?.text || t('noPomodoroTask');
+  pomodoroPlay.textContent = pomodoroTimer ? 'Ⅱ' : '▶';
+  pomodoroPlay.setAttribute('aria-label', pomodoroTimer ? t('pausePomodoro') : t('startPomodoro'));
+  pomodoroMinutes.value = pomodoroDuration;
+}
+
+function togglePomodoro() {
+  if (pomodoroTimer) { window.clearInterval(pomodoroTimer); pomodoroTimer = null; }
+  else {
+    pomodoroTimer = window.setInterval(() => {
+      if (pomodoroSeconds <= 1) { window.clearInterval(pomodoroTimer); pomodoroTimer = null; pomodoroSeconds = 0; }
+      else pomodoroSeconds -= 1;
+      renderPomodoro();
+    }, 1000);
+  }
+  renderPomodoro();
+}
+
+function resetPomodoro() {
+  window.clearInterval(pomodoroTimer);
+  pomodoroTimer = null;
+  pomodoroSeconds = pomodoroDuration * 60;
+  renderPomodoro();
+}
+
+function linkPomodoroTask(taskId) {
+  const choice = extraPomodoros.length ? Number(window.prompt(`Pomodoro para esta tarea (1-${extraPomodoros.length + 1})`, '1')) : 1;
+  if (!Number.isInteger(choice) || choice < 1 || choice > extraPomodoros.length + 1) return;
+  if (choice === 1) { pomodoroTaskId = taskId; renderPomodoro(); }
+  else { extraPomodoros[choice - 2].taskId = taskId; renderExtraPomodoros(); }
+  renderTasks();
+}
+
+function getPomodoroMinutesForTask(taskId) {
+  const durations = pomodoroTaskId === taskId ? [pomodoroDuration] : [];
+  extraPomodoros.filter((pomodoro) => pomodoro.taskId === taskId).forEach((pomodoro) => durations.push(pomodoro.duration));
+  return durations;
+}
+
+function renderExtraPomodoros() {
+  pomodoroWidgets.querySelectorAll('.extra-pomodoro').forEach((element) => element.remove());
+  extraPomodoros.forEach((pomodoro, index) => {
+    const task = tasks.find((item) => item.id === pomodoro.taskId);
+    const widget = document.createElement('aside');
+    widget.className = `pomodoro-widget extra-pomodoro pomodoro-${pomodoro.size}${pomodoro.minimized ? ' minimized' : ''}`;
+    widget.dataset.pomodoroId = pomodoro.id;
+    if (pomodoro.position && Number.isFinite(pomodoro.position.left) && Number.isFinite(pomodoro.position.top)) {
+      widget.style.left = `${pomodoro.position.left}px`;
+      widget.style.top = `${pomodoro.position.top}px`;
+      widget.style.right = 'auto';
+      widget.style.bottom = 'auto';
+    } else {
+      widget.style.right = '1rem';
+      widget.style.bottom = `${16 + index * 300}px`;
+    }
+    widget.innerHTML = `<div class="pomodoro-heading"><span class="pomodoro-heading-left"><button type="button" class="pomodoro-minimize" data-extra-action="minimize" aria-label="Minimizar">⌄</button><span>${t('pomodoro')} ${index + 2}</span></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button type="button" class="pomodoro-close" data-extra-action="close" aria-label="Cerrar Pomodoro">×</button></span></div><strong class="pomodoro-time">${String(Math.floor(pomodoro.seconds / 60)).padStart(2, '0')}:${String(pomodoro.seconds % 60).padStart(2, '0')}</strong><button class="pomodoro-task" type="button" data-extra-action="edit-task">${task?.text || t('noPomodoroTask')}</button><label class="pomodoro-duration"><span>${t('duration')}</span><input class="extra-duration" type="number" min="1" max="180" value="${pomodoro.duration}" /><span>${t('minutes')}</span></label><div class="pomodoro-options"><select class="extra-size" aria-label="Tamaño"><option value="normal">Normal</option><option value="small">Pequeño</option><option value="large">Grande</option></select></div><div class="pomodoro-controls"><button type="button" data-extra-action="play" aria-label="Iniciar temporizador">${pomodoro.timer ? 'Ⅱ' : '▶'}</button><button type="button" data-extra-action="reset" aria-label="Reiniciar temporizador">↺</button></div>`;
+    widget.querySelector('.extra-size').value = pomodoro.size;
+    pomodoroWidgets.append(widget);
+    enablePomodoroDragging(widget, (position) => { pomodoro.position = position; });
+  });
+  updatePomodoroAddButton();
+}
+
+function updatePomodoroAddButton() {
+  addPomodoroButton.disabled = primaryPomodoroVisible && extraPomodoros.length >= 2;
+}
+
+function closePrimaryPomodoro() {
+  window.clearInterval(pomodoroTimer);
+  pomodoroTimer = null;
+  primaryPomodoroVisible = false;
+  pomodoroWidget.classList.add('hidden');
+  updatePomodoroAddButton();
+}
+
+function closeExtraPomodoro(pomodoroId) {
+  const pomodoro = extraPomodoros.find((item) => item.id === pomodoroId);
+  if (!pomodoro) return;
+  window.clearInterval(pomodoro.timer);
+  extraPomodoros = extraPomodoros.filter((item) => item.id !== pomodoroId);
+  renderExtraPomodoros();
+}
+
+function addPomodoro() {
+  if (!primaryPomodoroVisible) {
+    primaryPomodoroVisible = true;
+    pomodoroWidget.classList.remove('hidden');
+    renderPomodoro();
+    updatePomodoroAddButton();
+    return;
+  }
+  if (extraPomodoros.length >= 2) return;
+  extraPomodoros.push({ id: String(Date.now()), duration: 25, seconds: 1500, taskId: null, timer: null, size: 'normal', minimized: false, position: null });
+  renderExtraPomodoros();
+}
+
+function setPomodoroDuration() {
+  const value = Math.min(180, Math.max(1, Number.parseInt(pomodoroMinutes.value, 10) || 25));
+  pomodoroDuration = value;
+  pomodoroSeconds = value * 60;
+  window.clearInterval(pomodoroTimer);
+  pomodoroTimer = null;
+  renderPomodoro();
+}
+
+function restorePomodoroPosition() {
+  try {
+    const position = JSON.parse(localStorage.getItem(POMODORO_POSITION_STORAGE_KEY));
+    if (!position || !Number.isFinite(position.left) || !Number.isFinite(position.top)) return;
+    pomodoroWidget.style.left = `${position.left}px`;
+    pomodoroWidget.style.top = `${position.top}px`;
+    pomodoroWidget.style.right = 'auto';
+    pomodoroWidget.style.bottom = 'auto';
+  } catch { /* Default fixed position remains in use. */ }
+}
+
+function enablePomodoroDragging(widget, onPositionChange = null) {
+  let startX = 0; let startY = 0; let startLeft = 0; let startTop = 0;
+  widget.addEventListener('pointerdown', (event) => {
+    if (event.target.closest('button, input, label, select')) return;
+    const rect = widget.getBoundingClientRect();
+    startX = event.clientX; startY = event.clientY; startLeft = rect.left; startTop = rect.top;
+    widget.setPointerCapture(event.pointerId);
+    widget.classList.add('dragging');
+  });
+  widget.addEventListener('pointermove', (event) => {
+    if (!widget.classList.contains('dragging')) return;
+    const maxLeft = Math.max(0, window.innerWidth - widget.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - widget.offsetHeight);
+    const left = Math.min(maxLeft, Math.max(0, startLeft + event.clientX - startX));
+    const top = Math.min(maxTop, Math.max(0, startTop + event.clientY - startY));
+    Object.assign(widget.style, { left: `${left}px`, top: `${top}px`, right: 'auto', bottom: 'auto' });
+  });
+  widget.addEventListener('pointerup', () => {
+    if (!widget.classList.contains('dragging')) return;
+    widget.classList.remove('dragging');
+    const position = { left: widget.offsetLeft, top: widget.offsetTop };
+    onPositionChange?.(position);
+    if (widget === pomodoroWidget) localStorage.setItem(POMODORO_POSITION_STORAGE_KEY, JSON.stringify(position));
+  });
+}
+
 function getPriorityLabel(priority) {
-  return t(priorityLabels[priority] || 'medium');
+  if (!priority) return t('noPriority');
+  return priorityOptions.find((option) => option.id === priority)?.name || t(priorityLabels[priority] || 'medium');
+}
+
+function getPriorityColor(priority) {
+  return priorityOptions.find((option) => option.id === priority)?.color || '';
+}
+
+function renderPriorityOptions() {
+  const selected = taskPriority.value;
+  taskPriority.innerHTML = `<option value="">${t('noPriority')}</option>${priorityOptions.map((option) => `<option value="${option.id}">${sanitizeInput(option.name)}</option>`).join('')}<option value="__add__">AÑADIR</option>`;
+  taskPriority.value = priorityOptions.some((option) => option.id === selected) ? selected : '';
+  updateCustomSelectTriggers();
+}
+
+function updateCustomSelectTriggers() {
+  const priorityName = getPriorityLabel(taskPriority.value);
+  const listName = lists.find((list) => list.id === taskListSelect.value)?.name || t('noList');
+  document.querySelector('[data-custom-select="priority"]')?.replaceChildren(document.createTextNode(priorityName));
+  document.querySelector('[data-custom-select="list"]')?.replaceChildren(document.createTextNode(listName));
+}
+
+function closeCustomSelectMenus() {
+  document.querySelectorAll('.custom-select-menu').forEach((menu) => menu.remove());
+  document.querySelectorAll('.task-form-meta > label.custom-select-open').forEach((label) => label.classList.remove('custom-select-open'));
+  document.body.classList.remove('selector-menu-open');
+  document.documentElement.classList.remove('selector-menu-open');
+}
+
+function closeTaskMenus() {
+  document.querySelectorAll('.task-menu').forEach((menu) => {
+    menu.classList.add('hidden');
+    menu.previousElementSibling?.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function openCustomSelect(type, trigger) {
+  closeTaskMenus();
+  closeCustomSelectMenus();
+  taskForm.classList.add('is-expanded');
+  document.body.classList.add('selector-menu-open');
+  document.documentElement.classList.add('selector-menu-open');
+
+  const triggerLabel = trigger.parentElement;
+  triggerLabel.classList.add('custom-select-open');
+  const menu = document.createElement('div');
+  menu.className = 'custom-select-menu';
+  const options = type === 'priority'
+    ? priorityOptions.map((option) => ({ id: option.id, name: option.name }))
+    : lists.map((list) => ({ id: list.id, name: list.name }));
+  menu.innerHTML = `${options.map((option) => `<div class="custom-select-option"><button type="button" data-select-value="${option.id}">${sanitizeInput(option.name)}</button><button type="button" class="option-pencil" data-edit-option="${option.id}">✎</button></div>`).join('')}<button type="button" class="custom-select-add" data-select-value="__add__">AÑADIR</button>`;
+  const triggerRect = trigger.getBoundingClientRect();
+  const estimatedMenuHeight = Math.min(245, options.length * 40 + 52);
+  if (triggerRect.bottom + estimatedMenuHeight > window.innerHeight - 8) {
+    menu.classList.add('opens-up');
+  }
+  triggerLabel.append(menu);
+  menu.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const editId = event.target.closest('[data-edit-option]')?.dataset.editOption;
+    const value = event.target.closest('[data-select-value]')?.dataset.selectValue;
+
+    if (editId) {
+      if (type === 'priority') {
+        taskPriority.value = editId;
+        editSelectedPriority();
+        closeCustomSelectMenus();
+      } else {
+        const list = lists.find((item) => item.id === editId);
+        const row = event.target.closest('.custom-select-option');
+        if (list && row) {
+          row.innerHTML = `<input class="inline-option-input" value="${sanitizeInput(list.name)}" maxlength="30" aria-label="Nombre de lista" />`;
+          const input = row.querySelector('input');
+          input.focus();
+          input.select();
+          input.addEventListener('change', () => {
+            renameList(list.id, input.value);
+            updateCustomSelectTriggers();
+            closeCustomSelectMenus();
+            taskForm.classList.add('is-expanded');
+          });
+        }
+      }
+      return;
+    }
+
+    if (!value) return;
+    if (type === 'priority') {
+      taskPriority.value = value;
+      taskPriority.dispatchEvent(new Event('change'));
+    } else {
+      taskListSelect.value = value;
+      taskListSelect.dispatchEvent(new Event('change'));
+    }
+    updateCustomSelectTriggers();
+    closeCustomSelectMenus();
+    taskForm.classList.add('is-expanded');
+    if (!(type === 'priority' && value === '__add__')) trigger.focus();
+  });
+}
+
+function editSelectedPriority() {
+  const option = priorityOptions.find((item) => item.id === taskPriority.value);
+  if (!option) return;
+  priorityColorPicker.innerHTML = `<input class="priority-name-input" value="${sanitizeInput(option.name)}" maxlength="30" aria-label="Nombre de prioridad" />${priorityColors.map((color) => `<button type="button" class="priority-color-dot" data-priority-color="${color}" style="--priority-color:${color}" aria-label="${color}"></button>`).join('')}`;
+  priorityColorPicker.dataset.priorityId = option.id;
+  priorityColorPicker.classList.remove('hidden');
+  savePriorityOptions();
+  renderPriorityOptions();
+  taskPriority.value = option.id;
+  renderTasks();
+}
+
+function addPriorityOption() {
+  const id = `priority-${Date.now()}`;
+  priorityOptions.push({ id, name: 'Nueva prioridad', color: '#8b5cf6' });
+  savePriorityOptions();
+  renderPriorityOptions();
+  taskPriority.value = id;
+  editSelectedPriority();
 }
 
 function getListById(listId) {
@@ -308,17 +658,19 @@ function closeSettingsDetail() {
 }
 
 function renderListOptions() {
+  const selected = taskListSelect.value;
   taskListSelect.innerHTML = `<option value="">${t('noList')}</option>${lists
     .map(
       (list) => `
         <option value="${list.id}" ${selectedListId === list.id ? 'selected' : ''}>${sanitizeInput(list.name)}</option>
       `,
     )
-    .join('')}`;
+    .join('')}<option value="__add__">AÑADIR</option>`;
 
-  if (!taskListSelect.value && lists.length) {
+  if (!lists.some((list) => list.id === selected)) {
     taskListSelect.value = lists[0].id;
   }
+  updateCustomSelectTriggers();
 }
 
 function renderSidebarLists() {
@@ -331,7 +683,7 @@ function renderSidebarLists() {
             <button type="button" class="list-more-button" data-list-action="toggle-menu" data-list-id="${list.id}" aria-label="${t('listOptions')}" aria-expanded="false">•••</button>
             <div class="list-tab-menu hidden">
               <button type="button" data-list-action="rename" data-list-id="${list.id}">${t('editList')}</button>
-              <button type="button" data-list-action="delete" data-list-id="${list.id}">${t('removeList')}</button>
+              ${lists.length > 1 ? `<button type="button" data-list-action="delete" data-list-id="${list.id}">${t('removeList')}</button>` : ''}
               <button type="button" data-list-action="move-right" data-list-id="${list.id}">${t('moveRight')}</button>
               <button type="button" data-list-action="move-left" data-list-id="${list.id}">${t('moveLeft')}</button>
             </div>
@@ -343,7 +695,7 @@ function renderSidebarLists() {
 
   document.querySelectorAll('.selected-list-manage').forEach((button) => {
     button.classList.toggle('hidden', selectedListId === 'all');
-    button.disabled = selectedListId === 'all';
+    button.disabled = selectedListId === 'all' || (button.dataset.listAction === 'delete-selected' && lists.length <= 1);
   });
 
   updateListScrollControls();
@@ -368,6 +720,14 @@ function getVisibleTasks() {
 
   if (activeFilter === 'completed') {
     visibleTasks = scopedTasks.filter((task) => task.completed);
+  }
+
+  if (focusModeActive) {
+    const priorityRank = { alta: 3, media: 2, baja: 1, '': 0 };
+    return scopedTasks
+      .filter((task) => !task.completed)
+      .sort((first, second) => priorityRank[second.priority] - priorityRank[first.priority] || second.createdAt.localeCompare(first.createdAt))
+      .slice(0, 3);
   }
 
   if (taskOrder === 'manual') {
@@ -477,12 +837,14 @@ function renderTasks() {
             <div class="task-text-wrap">
               <span class="task-text">${sanitizeInput(task.text)}</span>
               <div class="task-meta-row">
-                <span class="task-badge priority-${task.priority || 'none'}">${getPriorityLabel(task.priority)}</span>
+                <span class="task-badge priority-${task.priority || 'none'}" style="${getPriorityColor(task.priority) ? `--task-priority-color:${getPriorityColor(task.priority)}` : ''}">${getPriorityLabel(task.priority)}</span>
+                ${getPomodoroMinutesForTask(task.id).map((minutes) => `<span class="task-pomodoro-badge">◷ ${minutes} min</span>`).join('')}
                 ${dueText ? `<span class="task-badge due-date ${isOverdue ? 'overdue' : ''}">📅 ${dueText}${timeText}</span>` : ''}
               </div>
             </div>
 
             <div class="task-actions">
+              <button type="button" class="task-pomodoro" data-action="pomodoro" data-id="${task.id}" aria-label="${t('linkPomodoro')}" title="${t('linkPomodoro')}">◷</button>
               <button type="button" class="task-more" aria-label="${t('more')}" aria-expanded="false">•••</button>
               <div class="task-menu hidden">
                 <button type="button" data-action="edit" data-id="${task.id}">${t('edit')}</button>
@@ -499,6 +861,8 @@ function renderTasks() {
 }
 
 function resetTaskForm() {
+  closeCustomSelectMenus();
+  taskForm.classList.remove('is-expanded');
   taskForm.reset();
   taskPriority.value = '';
   taskForm.dataset.mode = 'create';
@@ -518,8 +882,11 @@ function openTaskEditor(taskId) {
     return;
   }
 
+  closeTaskMenus();
+  closeCustomSelectMenus();
   editingTaskId = taskId;
   taskForm.dataset.mode = 'edit';
+  taskForm.classList.add('is-expanded');
   taskInput.value = task.text;
   taskDueDate.value = task.dueDate || '';
   taskDueTime.value = task.dueTime || '';
@@ -600,6 +967,7 @@ function submitTask(event) {
 }
 
 function toggleTask(taskId) {
+  const taskBeforeToggle = tasks.find((task) => task.id === taskId);
   tasks = tasks.map((task) => {
     if (task.id !== taskId) {
       return task;
@@ -609,6 +977,7 @@ function toggleTask(taskId) {
   });
 
   persistState();
+  if (taskBeforeToggle && !taskBeforeToggle.completed) recordTaskCompletion();
   renderTasks();
   if (detailTaskId === taskId) {
     renderDetailSubtasks();
@@ -727,8 +1096,12 @@ function handleTaskAction(event) {
   const moreButton = event.target.closest('.task-more');
   if (moreButton) {
     const menu = moreButton.nextElementSibling;
-    menu.classList.toggle('hidden');
-    moreButton.setAttribute('aria-expanded', String(!menu.classList.contains('hidden')));
+    const isOpen = menu && !menu.classList.contains('hidden');
+    closeTaskMenus();
+    if (menu && !isOpen) {
+      menu.classList.remove('hidden');
+      moreButton.setAttribute('aria-expanded', 'true');
+    }
     return;
   }
 
@@ -748,6 +1121,10 @@ function handleTaskAction(event) {
 
   if (action === 'detail') {
     openTaskDetail(id);
+  }
+
+  if (action === 'pomodoro') {
+    linkPomodoroTask(id);
   }
 
   if (action === 'delete') {
@@ -853,7 +1230,7 @@ function moveList(listId, direction) {
 }
 
 function deleteList(listId) {
-  if (lists.length <= 1 || listId === 'inbox') {
+  if (lists.length <= 1) {
     return;
   }
 
@@ -877,10 +1254,16 @@ function confirmDeleteList() {
     return;
   }
 
+  if (lists.length <= 1) {
+    closeDeleteListDialog();
+    return;
+  }
+
+  const fallbackListId = lists.find((list) => list.id !== listId)?.id;
   lists = lists.filter((list) => list.id !== listId);
   tasks = tasks.map((task) => ({
     ...task,
-    listId: task.listId === listId ? 'inbox' : task.listId,
+    listId: task.listId === listId ? fallbackListId : task.listId,
   }));
 
   if (selectedListId === listId) {
@@ -1011,6 +1394,47 @@ function handleSidebarListActions(event) {
 }
 
 function bindEvents() {
+  focusModeToggle.addEventListener('click', () => {
+    focusModeActive = !focusModeActive;
+    updateFocusMode();
+    renderTasks();
+  });
+  pomodoroPlay.addEventListener('click', togglePomodoro);
+  pomodoroReset.addEventListener('click', resetPomodoro);
+  pomodoroClose.addEventListener('click', closePrimaryPomodoro);
+  pomodoroMinutes.addEventListener('change', setPomodoroDuration);
+  addPomodoroButton.addEventListener('click', addPomodoro);
+  pomodoroTask.addEventListener('click', () => { if (pomodoroTaskId) openTaskEditor(pomodoroTaskId); });
+  pomodoroWidget.querySelector('.pomodoro-minimize').addEventListener('click', () => pomodoroWidget.classList.toggle('minimized'));
+  pomodoroWidget.querySelector('.pomodoro-size').addEventListener('change', (event) => {
+    pomodoroWidget.classList.remove('pomodoro-small', 'pomodoro-large');
+    if (event.target.value !== 'normal') pomodoroWidget.classList.add(`pomodoro-${event.target.value}`);
+  });
+  pomodoroWidgets.addEventListener('click', (event) => {
+    const widget = event.target.closest('.extra-pomodoro');
+    if (!widget) return;
+    const pomodoro = extraPomodoros.find((item) => item.id === widget.dataset.pomodoroId);
+    const action = event.target.closest('[data-extra-action]')?.dataset.extraAction;
+    if (!pomodoro || !action) return;
+    if (action === 'close') { closeExtraPomodoro(pomodoro.id); return; }
+    if (action === 'edit-task' && pomodoro.taskId) openTaskEditor(pomodoro.taskId);
+    if (action === 'minimize') { pomodoro.minimized = !pomodoro.minimized; renderExtraPomodoros(); }
+    if (action === 'reset') { window.clearInterval(pomodoro.timer); pomodoro.timer = null; pomodoro.seconds = pomodoro.duration * 60; renderExtraPomodoros(); }
+    if (action === 'play') {
+      if (pomodoro.timer) { window.clearInterval(pomodoro.timer); pomodoro.timer = null; }
+      else pomodoro.timer = window.setInterval(() => { pomodoro.seconds = Math.max(0, pomodoro.seconds - 1); if (!pomodoro.seconds) { window.clearInterval(pomodoro.timer); pomodoro.timer = null; } renderExtraPomodoros(); }, 1000);
+      renderExtraPomodoros();
+    }
+  });
+  pomodoroWidgets.addEventListener('change', (event) => {
+    const widget = event.target.closest('.extra-pomodoro');
+    const pomodoro = extraPomodoros.find((item) => item.id === widget?.dataset.pomodoroId);
+    if (!pomodoro) return;
+    if (event.target.classList.contains('extra-duration')) { pomodoro.duration = Math.min(180, Math.max(1, Number(event.target.value) || 25)); pomodoro.seconds = pomodoro.duration * 60; }
+    if (event.target.classList.contains('extra-size')) pomodoro.size = event.target.value;
+    renderExtraPomodoros();
+  });
+  enablePomodoroDragging(pomodoroWidget);
   taskForm.addEventListener('submit', submitTask);
   taskForm.addEventListener('click', (event) => {
     const clearButton = event.target.closest('[data-clear-control]');
@@ -1193,8 +1617,57 @@ function bindEvents() {
   });
 
   taskListSelect.addEventListener('change', () => {
+    if (taskListSelect.value === '__add__') {
+      createList('Nueva lista');
+      return;
+    }
     if (taskForm.dataset.mode === 'create' && taskListSelect.value) {
       selectedListId = taskListSelect.value; 
+    }
+  });
+
+  taskPriority.addEventListener('change', () => {
+    if (taskPriority.value === '__add__') addPriorityOption();
+  });
+  editPriorityOptionButton.addEventListener('click', editSelectedPriority);
+  editListOptionButton.addEventListener('click', () => {
+    const list = lists.find((item) => item.id === taskListSelect.value);
+    if (!list) return;
+    const name = window.prompt(t('renameListPrompt'), list.name);
+    if (name !== null) renameList(list.id, name);
+  });
+  priorityColorPicker.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-priority-color]');
+    const option = priorityOptions.find((item) => item.id === priorityColorPicker.dataset.priorityId);
+    if (!button || !option) return;
+    option.color = button.dataset.priorityColor;
+    savePriorityOptions();
+    priorityColorPicker.classList.add('hidden');
+    renderTasks();
+  });
+  priorityColorPicker.addEventListener('input', (event) => {
+    if (!event.target.matches('.priority-name-input')) return;
+    const option = priorityOptions.find((item) => item.id === priorityColorPicker.dataset.priorityId);
+    if (!option) return;
+    option.name = sanitizeInput(event.target.value).slice(0, 30) || option.name;
+    savePriorityOptions();
+    renderPriorityOptions();
+    taskPriority.value = option.id;
+    renderTasks();
+  });
+  document.querySelectorAll('.custom-select-trigger').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openCustomSelect(button.dataset.customSelect, button);
+    });
+  });
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('#task-form')) {
+      return;
+    }
+    closeCustomSelectMenus();
+    if (!event.target.closest('.task-actions, .task-menu')) {
+      closeTaskMenus();
     }
   });
 
@@ -1237,6 +1710,10 @@ function initializeApp() {
   const isDark = currentTheme === 'dark';
   applyTheme(isDark ? 'dark' : 'light');
   applyTranslations();
+  updateFocusMode();
+  updateStreakDisplay();
+  restorePomodoroPosition();
+  renderPomodoro();
   closeSettingsMenu();
 
   if (!lists.length) {

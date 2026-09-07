@@ -121,7 +121,9 @@ function normalizeTask(task, fallbackListId = 'inbox') {
     return null;
   }
 
-  const priority = PRIORITY_LEVELS.includes(task.priority) ? task.priority : 'media';
+  const priority = typeof task.priority === 'string' && task.priority.length <= 40
+    ? task.priority
+    : 'media';
   const listId = typeof task.listId === 'string' && task.listId ? task.listId : fallbackListId;
 
   return {
