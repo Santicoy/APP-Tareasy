@@ -176,6 +176,7 @@
             <button class="nav-item" type="button" data-filter="current-all">Todas de esta lista</button>
             <button class="nav-item" type="button" data-filter="active">Pendientes</button>
             <button class="nav-item" type="button" data-filter="completed">Completadas</button>
+            <button id="dice-menu-button" class="nav-item dice-nav-button" type="button" aria-label="Abrir dados" aria-haspopup="dialog" aria-expanded="false"><span aria-hidden="true">🎲</span><span id="dice-menu-label">Dados</span></button>
           </div>
 
         </nav>
@@ -298,6 +299,17 @@
       </main>
     </div>
 
+    <div id="dice-menu-overlay" class="dice-menu-overlay hidden" aria-hidden="true"></div>
+    <section id="dice-menu-panel" class="dice-menu-panel hidden" role="dialog" aria-modal="true" aria-labelledby="dice-menu-title">
+      <div class="dice-menu-tabs" role="tablist" aria-label="Herramientas">
+        <button type="button" class="dice-menu-tab active" role="tab" aria-selected="true" data-dice-tab="dice">Dados</button>
+        <button type="button" class="dice-menu-tab" role="tab" aria-selected="false" data-dice-tab="roulette">Ruleta</button>
+        <button type="button" class="dice-menu-tab" role="tab" aria-selected="false" data-dice-tab="lists">Listas</button>
+        <button id="close-dice-menu" class="dice-menu-close" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div id="dice-menu-content" class="dice-menu-content" role="tabpanel" aria-live="polite">Coming soon</div>
+    </section>
+
     <div id="task-detail-overlay" class="settings-overlay hidden" aria-hidden="true"></div>
     <section id="task-detail-panel" class="task-detail-panel hidden" role="dialog" aria-modal="true" aria-labelledby="task-detail-title">
       <div class="settings-header">
@@ -329,14 +341,14 @@
 
     <div id="pomodoro-widgets">
     <aside id="pomodoro-widget" class="pomodoro-widget" data-pomodoro-id="1" aria-label="Temporizador Pomodoro">
-      <div class="pomodoro-heading"><span class="pomodoro-heading-left"><span class="pomodoro-drag-indicator" aria-hidden="true">⁝⁝</span><button type="button" class="pomodoro-minimize" aria-label="Minimizar">⌄</button><input id="pomodoro-title" class="pomodoro-title-input" value="Pomodoro" aria-label="Nombre del Pomodoro" maxlength="40" /></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button type="button" class="pomodoro-close" aria-label="Cerrar Pomodoro">×</button></span></div>
-      <strong id="pomodoro-time" class="pomodoro-time">25:00</strong>
-      <button id="pomodoro-task" class="pomodoro-task" type="button">Sin tarea vinculada</button>
-      <div class="pomodoro-duration"><label for="pomodoro-duration-select" id="pomodoro-duration-label">Duración</label><select id="pomodoro-duration-select" aria-label="Duración"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="120">2 h</option><option value="180">3 h</option><option value="custom">Personalizada</option></select><input id="pomodoro-minutes" class="pomodoro-custom-duration hidden" type="number" min="1" max="180" value="25" inputmode="numeric" aria-label="Duración personalizada" /></div>
-      <div class="pomodoro-settings-grid"><label class="pomodoro-setting"><span id="pomodoro-sound-label">Sonido al terminar</span><select id="pomodoro-sound" aria-label="Sonido al terminar"><option value="none">Sin sonido</option><option value="bell">Campana</option><option value="chime">Campanillas</option><option value="pulse">Pulso</option></select></label><div class="pomodoro-setting"><span id="pomodoro-size-label">Tamaño</span><div class="pomodoro-size-buttons" role="group" aria-label="Tamaño"><button type="button" data-pomodoro-size="small">Pequeño</button><button type="button" data-pomodoro-size="normal" class="active">Mediano</button><button type="button" data-pomodoro-size="large">Grande</button></div></div></div>
+      <div class="pomodoro-heading"><span class="pomodoro-heading-left"><span class="pomodoro-drag-indicator" aria-hidden="true">⁝⁝</span><button type="button" class="pomodoro-minimize" aria-label="Minimizar">⌄</button><input id="pomodoro-title" class="pomodoro-title-input" value="Pomodoro 1" aria-label="Nombre del Pomodoro" maxlength="40" /></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button id="pomodoro-display-mode" class="pomodoro-display-mode" type="button" aria-label="Cambiar formato del temporizador">✎</button><button type="button" class="pomodoro-close" aria-label="Cerrar Pomodoro">×</button></span></div>
+      <div class="pomodoro-clock-shell" style="--pomodoro-progress: 100%"><strong id="pomodoro-time" class="pomodoro-time">25:00</strong></div>
+      <button id="pomodoro-task" class="pomodoro-task" type="button">🔗 Vincular tarea...</button>
+      <div class="pomodoro-settings-grid"><label class="pomodoro-setting"><span class="pomodoro-setting-icon" aria-hidden="true">◷</span><select id="pomodoro-duration-select" aria-label="Duración"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 h</option><option value="120">2 h</option><option value="180">3 h</option><option value="custom">Personalizada</option></select><input id="pomodoro-minutes" class="pomodoro-custom-duration hidden" type="number" min="1" max="240" value="25" inputmode="numeric" aria-label="Duración personalizada" /></label><label class="pomodoro-setting"><span class="pomodoro-setting-icon" aria-hidden="true">♟</span><select id="pomodoro-sound" aria-label="Sonido al terminar"><option value="none">Sin sonido</option><option value="bell">Campana</option><option value="chime">Campanillas</option><option value="pulse">Pulso</option></select></label><div class="pomodoro-setting"><span class="pomodoro-setting-icon" aria-hidden="true">⌗</span><div class="pomodoro-size-buttons" role="group" aria-label="Tamaño"><button type="button" data-pomodoro-size="small">P</button><button type="button" data-pomodoro-size="normal" class="active">M</button><button type="button" data-pomodoro-size="large">G</button></div></div></div>
       <div class="pomodoro-controls">
         <button id="pomodoro-play" class="pomodoro-play" type="button" aria-label="Iniciar temporizador">▶</button>
         <button id="pomodoro-reset" class="pomodoro-reset" type="button" aria-label="Reiniciar temporizador">↺</button>
+        <button id="pomodoro-settings-toggle" class="pomodoro-settings-toggle" type="button" aria-label="Mostrar u ocultar opciones">⚙</button>
       </div>
     </aside>
     </div>

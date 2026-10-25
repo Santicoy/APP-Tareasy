@@ -60,13 +60,19 @@ const pomodoroWidget = document.querySelector('#pomodoro-widget');
 const pomodoroMinutes = document.querySelector('#pomodoro-minutes');
 const pomodoroDurationSelect = document.querySelector('#pomodoro-duration-select');
 const pomodoroSound = document.querySelector('#pomodoro-sound');
+const pomodoroDisplayModeButton = document.querySelector('#pomodoro-display-mode');
+const pomodoroSettingsToggle = document.querySelector('#pomodoro-settings-toggle');
 const pomodoroTitle = document.querySelector('#pomodoro-title');
-const pomodoroDurationLabel = document.querySelector('#pomodoro-duration-label');
 const addPomodoroButton = document.querySelector('#add-pomodoro');
 const pomodoroWidgets = document.querySelector('#pomodoro-widgets');
 const editPriorityOptionButton = document.querySelector('#edit-priority-option');
 const editListOptionButton = document.querySelector('#edit-list-option');
 const priorityColorPicker = document.querySelector('#priority-color-picker');
+const diceMenuButton = document.querySelector('#dice-menu-button');
+const diceMenuOverlay = document.querySelector('#dice-menu-overlay');
+const diceMenuPanel = document.querySelector('#dice-menu-panel');
+const closeDiceMenuButton = document.querySelector('#close-dice-menu');
+const diceMenuContent = document.querySelector('#dice-menu-content');
 
 const appState = loadAppState();
 let tasks = appState.tasks;
@@ -86,7 +92,9 @@ let pendingDeleteListId = null;
 let focusModeActive = false;
 let pomodoroSeconds = 25 * 60;
 let pomodoroDuration = 25;
-let pomodoroTitleValue = 'Pomodoro';
+let pomodoroDurationMode = 'custom';
+let pomodoroDisplayMode = 'clock';
+let pomodoroTitleValue = 'Pomodoro 1';
 let pomodoroSoundValue = 'none';
 let pomodoroSize = 'normal';
 let pomodoroTimer = null;
@@ -98,6 +106,7 @@ const PRIORITY_OPTIONS_STORAGE_KEY = 'tareasy.priority-options.v1';
 const priorityColors = ['#111827', '#ef4444', '#f97316', '#facc15', '#22c55e', '#22d3ee', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff'];
 let priorityOptions = loadPriorityOptions();
 let extraPomodoros = [];
+let activeDiceTab = 'dice';
 
 function loadPriorityOptions() {
   const defaults = [
@@ -171,6 +180,11 @@ function t(key) {
     minimizePomodoro: { es: 'Minimizar', en: 'Minimize', zh: '最小化', pt: 'Minimizar' },
     closePomodoro: { es: 'Cerrar Pomodoro', en: 'Close Pomodoro', zh: '关闭番茄钟', pt: 'Fechar Pomodoro' },
     addOption: { es: 'AÑADIR', en: 'ADD', zh: '添加', pt: 'ADICIONAR' },
+    dice: { es: 'Dados', en: 'Dice', zh: '骰子', pt: 'Dados' },
+    roulette: { es: 'Ruleta', en: 'Roulette', zh: '轮盘', pt: 'Roleta' },
+    toolLists: { es: 'Listas', en: 'Lists', zh: '列表', pt: 'Listas' },
+    comingSoon: { es: 'Próximamente', en: 'Coming soon', zh: '即将推出', pt: 'Em breve' },
+    closeDiceMenu: { es: 'Cerrar menú', en: 'Close menu', zh: '关闭菜单', pt: 'Fechar menu' },
     linkPomodoro: { es: 'Vincular al Pomodoro', en: 'Link to Pomodoro', zh: '关联到番茄钟', pt: 'Vincular ao Pomodoro' },
     noPriority: { es: 'Sin prioridad', en: 'No priority', zh: '无优先级', pt: 'Sem prioridade' },
     noList: { es: 'Sin lista', en: 'No list', zh: '无列表', pt: 'Sem lista' },
@@ -250,6 +264,13 @@ function applyTranslations() {
   document.querySelector('.sort-control span').textContent = t('sort');
   document.querySelector('#focus-mode-label').textContent = t('focusMode');
   document.querySelector('#add-pomodoro-label').textContent = t('newPomodoro');
+  diceMenuButton.setAttribute('aria-label', t('dice'));
+  closeDiceMenuButton.setAttribute('aria-label', t('closeDiceMenu'));
+  document.querySelectorAll('[data-dice-tab="dice"]').forEach((tab) => { tab.textContent = t('dice'); });
+  document.querySelectorAll('[data-dice-tab="roulette"]').forEach((tab) => { tab.textContent = t('roulette'); });
+  document.querySelectorAll('[data-dice-tab="lists"]').forEach((tab) => { tab.textContent = t('toolLists'); });
+  diceMenuContent.textContent = t('comingSoon');
+  renderDiceMenu();
   focusModeIndicator.textContent = t('focusActive');
   document.querySelectorAll('.pomodoro-minimize').forEach((button) => button.setAttribute('aria-label', t('minimizePomodoro')));
   document.querySelectorAll('.pomodoro-close').forEach((button) => button.setAttribute('aria-label', t('closePomodoro')));
@@ -281,11 +302,8 @@ function applyTranslations() {
   document.querySelector('#close-task-detail').setAttribute('aria-label', t('cancel'));
   document.querySelector('#task-detail-panel .eyebrow').textContent = t('detail');
   document.querySelector('#settings-back').textContent = t('backSettings');
-  if (!pomodoroTitleValue) pomodoroTitleValue = t('pomodoro');
+  if (!pomodoroTitleValue) pomodoroTitleValue = `${t('pomodoro')} 1`;
   if (document.activeElement !== pomodoroTitle) pomodoroTitle.value = pomodoroTitleValue;
-  pomodoroDurationLabel.textContent = t('pomodoroDurationOptions');
-  document.querySelector('#pomodoro-sound-label').textContent = t('pomodoroSound');
-  document.querySelector('#pomodoro-size-label').textContent = t('pomodoroSize');
   pomodoroTitle.setAttribute('aria-label', t('renamePomodoro'));
   document.querySelector('#pomodoro-sound option[value="none"]').textContent = t('noSound');
   document.querySelector('#pomodoro-sound option[value="bell"]').textContent = t('bellSound');
@@ -293,9 +311,9 @@ function applyTranslations() {
   document.querySelector('#pomodoro-sound option[value="pulse"]').textContent = t('pulseSound');
   const primaryDurationLabels = { 15: `15 ${t('minutes')}`, 30: `30 ${t('minutes')}`, 45: `45 ${t('minutes')}`, 60: `1 ${t('hour')}`, 120: `2 ${t('hour')}`, 180: `3 ${t('hour')}` };
   document.querySelectorAll('#pomodoro-duration-select option').forEach((option) => { if (primaryDurationLabels[option.value]) option.textContent = primaryDurationLabels[option.value]; });
-  document.querySelectorAll('[data-pomodoro-size="small"]').forEach((button) => { button.textContent = t('smallSize'); });
-  document.querySelectorAll('[data-pomodoro-size="normal"]').forEach((button) => { button.textContent = t('mediumSize'); });
-  document.querySelectorAll('[data-pomodoro-size="large"]').forEach((button) => { button.textContent = t('largeSize'); });
+  document.querySelectorAll('[data-pomodoro-size="small"]').forEach((button) => { button.textContent = 'P'; button.setAttribute('aria-label', t('smallSize')); });
+  document.querySelectorAll('[data-pomodoro-size="normal"]').forEach((button) => { button.textContent = 'M'; button.setAttribute('aria-label', t('mediumSize')); });
+  document.querySelectorAll('[data-pomodoro-size="large"]').forEach((button) => { button.textContent = 'G'; button.setAttribute('aria-label', t('largeSize')); });
   document.querySelectorAll('.add-option, .custom-select-add').forEach((element) => { element.textContent = t('addOption'); });
   pomodoroReset.setAttribute('aria-label', t('resetPomodoro'));
   renderPomodoro();
@@ -340,16 +358,119 @@ function updateFocusMode() {
   focusModeIndicator.classList.toggle('hidden', !focusModeActive);
 }
 
+function getDiceTabLabel(tabId) {
+  return { dice: t('dice'), roulette: t('roulette'), lists: t('toolLists') }[tabId] || t('dice');
+}
+
+function renderDiceMenu() {
+  diceMenuContent.textContent = t('comingSoon');
+  document.querySelectorAll('.dice-menu-tab').forEach((tab) => {
+    const isActive = tab.dataset.diceTab === activeDiceTab;
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
+  });
+}
+
+function openDiceMenu() {
+  closeSettingsMenu();
+  closeTaskDetail();
+  closeDeleteListDialog();
+  closePomodoroDropdowns();
+  diceMenuOverlay.classList.remove('hidden');
+  diceMenuPanel.classList.remove('hidden');
+  diceMenuOverlay.setAttribute('aria-hidden', 'false');
+  diceMenuButton.setAttribute('aria-expanded', 'true');
+  document.body.classList.add('modal-open');
+  renderDiceMenu();
+  closeDiceMenuButton.focus();
+}
+
+function closeDiceMenu() {
+  diceMenuPanel.classList.add('hidden');
+  diceMenuOverlay.classList.add('hidden');
+  diceMenuOverlay.setAttribute('aria-hidden', 'true');
+  diceMenuButton.setAttribute('aria-expanded', 'false');
+  if (settingsPanel.classList.contains('hidden') && taskDetailPanel.classList.contains('hidden') && deleteListDialog.classList.contains('hidden')) {
+    document.body.classList.remove('modal-open');
+  }
+}
+
 function renderPomodoro() {
-  pomodoroTime.textContent = `${String(Math.floor(pomodoroSeconds / 60)).padStart(2, '0')}:${String(pomodoroSeconds % 60).padStart(2, '0')}`;
-  pomodoroTask.textContent = tasks.find((item) => item.id === pomodoroTaskId)?.text || t('noPomodoroTask');
+  pomodoroTime.textContent = formatPomodoroTime(pomodoroSeconds, pomodoroDisplayMode);
+  pomodoroWidget.classList.toggle('timer-verbose', pomodoroDisplayMode === 'verbose');
+  pomodoroTask.textContent = `🔗 ${tasks.find((item) => item.id === pomodoroTaskId)?.text || t('noPomodoroTask')}`;
+  const progress = pomodoroDuration > 0 ? Math.max(0, Math.min(100, pomodoroSeconds / (pomodoroDuration * 60) * 100)) : 0;
+  pomodoroTime.closest('.pomodoro-clock-shell')?.style.setProperty('--pomodoro-progress', `${progress}%`);
   pomodoroPlay.textContent = pomodoroTimer ? 'Ⅱ' : '▶';
   pomodoroPlay.setAttribute('aria-label', pomodoroTimer ? t('pausePomodoro') : t('startPomodoro'));
   pomodoroMinutes.value = pomodoroDuration;
-  pomodoroDurationSelect.value = [15, 30, 45, 60, 120, 180].includes(pomodoroDuration) ? String(pomodoroDuration) : 'custom';
+  pomodoroDurationSelect.value = pomodoroDurationMode === 'custom' ? 'custom' : pomodoroDurationMode;
   pomodoroMinutes.classList.toggle('hidden', pomodoroDurationSelect.value !== 'custom');
   pomodoroSound.value = pomodoroSoundValue;
+  syncPomodoroSelectTrigger(pomodoroDurationSelect);
+  syncPomodoroSelectTrigger(pomodoroSound);
   document.querySelectorAll('#pomodoro-widget [data-pomodoro-size]').forEach((button) => button.classList.toggle('active', button.dataset.pomodoroSize === pomodoroSize));
+}
+
+function formatPomodoroTime(seconds, displayMode = 'clock') {
+  if (displayMode === 'verbose') {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h, ${minutes}m, ${seconds % 60}s`;
+  }
+  return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function closePomodoroDropdowns() {
+  document.querySelectorAll('.pomodoro-select-menu').forEach((menu) => menu.classList.add('hidden'));
+  document.querySelectorAll('.pomodoro-select-trigger').forEach((trigger) => trigger.setAttribute('aria-expanded', 'false'));
+}
+
+function syncPomodoroSelectTrigger(select) {
+  const trigger = select?.parentElement.querySelector('.pomodoro-select-trigger');
+  const selected = [...(select?.options || [])].find((option) => option.value === select.value);
+  if (trigger && selected) trigger.textContent = selected.textContent;
+}
+
+function enhancePomodoroSelects(widget) {
+  widget.querySelectorAll('.pomodoro-setting select').forEach((select) => {
+    if (select.dataset.enhanced === 'true') return;
+    select.dataset.enhanced = 'true';
+    select.classList.add('pomodoro-native-select');
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'pomodoro-select-trigger';
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-label', select.getAttribute('aria-label') || 'Seleccionar');
+    const menu = document.createElement('div');
+    menu.className = 'pomodoro-select-menu hidden';
+    menu.setAttribute('role', 'listbox');
+    const renderOptions = () => {
+      const selected = [...select.options].find((option) => option.value === select.value);
+      trigger.textContent = selected?.textContent || '';
+      menu.innerHTML = [...select.options].map((option) => `<button type="button" role="option" aria-selected="${option.value === select.value}" data-pomodoro-option="${sanitizeInput(option.value)}">${sanitizeInput(option.textContent)}</button>`).join('');
+    };
+    renderOptions();
+    trigger.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !menu.classList.contains('hidden');
+      closePomodoroDropdowns();
+      if (!isOpen) {
+        menu.classList.remove('hidden');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+    menu.addEventListener('click', (event) => {
+      const option = event.target.closest('[data-pomodoro-option]');
+      if (!option) return;
+      select.value = option.dataset.pomodoroOption;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      renderOptions();
+      closePomodoroDropdowns();
+    });
+    select.addEventListener('change', renderOptions);
+    select.parentElement.append(trigger, menu);
+  });
 }
 
 function playPomodoroSound(sound) {
@@ -410,12 +531,18 @@ function getPomodoroDurationLabel(minutes) {
   return minutes >= 60 ? `${minutes / 60} ${t('hour')}` : `${minutes} ${t('minutes')}`;
 }
 
+function getPomodoroWidgetMarkup(pomodoro, index) {
+  const durationPreset = pomodoro.durationMode || ([15, 30, 45, 60, 120, 180].includes(pomodoro.duration) ? String(pomodoro.duration) : 'custom');
+  return `<div class="pomodoro-heading"><span class="pomodoro-heading-left"><span class="pomodoro-drag-indicator" aria-hidden="true">⁝⁝</span><button type="button" class="pomodoro-minimize" data-extra-action="minimize" aria-label="Minimizar">⌄</button><input class="pomodoro-title-input extra-title" value="${sanitizeInput(pomodoro.title || `${t('pomodoro')} ${index + 2}`)}" maxlength="40" aria-label="${t('renamePomodoro')}" /></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button type="button" class="pomodoro-display-mode" data-extra-action="display-mode" aria-label="Cambiar formato del temporizador">✎</button><button type="button" class="pomodoro-close" data-extra-action="close" aria-label="Cerrar Pomodoro">×</button></span></div><div class="pomodoro-clock-shell"><strong class="pomodoro-time"></strong></div><button class="pomodoro-task" type="button" data-extra-action="edit-task"></button><div class="pomodoro-settings-grid"><label class="pomodoro-setting"><span class="pomodoro-setting-icon" aria-hidden="true">◷</span><select class="extra-duration-preset" aria-label="${t('pomodoroDurationOptions')}"><option value="15">${getPomodoroDurationLabel(15)}</option><option value="30">${getPomodoroDurationLabel(30)}</option><option value="45">${getPomodoroDurationLabel(45)}</option><option value="60">${getPomodoroDurationLabel(60)}</option><option value="120">${getPomodoroDurationLabel(120)}</option><option value="180">${getPomodoroDurationLabel(180)}</option><option value="custom">${t('pomodoroCustomDuration')}</option></select><input class="extra-duration pomodoro-custom-duration ${durationPreset === 'custom' ? '' : 'hidden'}" type="number" min="1" max="240" value="${pomodoro.duration}" aria-label="${t('pomodoroCustomDuration')}" /></label><label class="pomodoro-setting"><span class="pomodoro-setting-icon" aria-hidden="true">♟</span><select class="extra-sound" aria-label="${t('pomodoroSound')}"><option value="none">${t('noSound')}</option><option value="bell">${t('bellSound')}</option><option value="chime">${t('chimeSound')}</option><option value="pulse">${t('pulseSound')}</option></select></label><div class="pomodoro-setting"><span class="pomodoro-setting-icon" aria-hidden="true">⌗</span><div class="pomodoro-size-buttons" role="group" aria-label="${t('pomodoroSize')}"><button type="button" data-extra-size="small" aria-label="${t('smallSize')}">P</button><button type="button" data-extra-size="normal" aria-label="${t('mediumSize')}">M</button><button type="button" data-extra-size="large" aria-label="${t('largeSize')}">G</button></div></div></div><div class="pomodoro-controls"><button type="button" data-extra-action="play" aria-label="${t('startPomodoro')}">▶</button><button type="button" data-extra-action="reset" aria-label="${t('resetPomodoro')}">↺</button><button type="button" class="pomodoro-settings-toggle" data-extra-action="settings" aria-label="Mostrar u ocultar opciones">⚙</button></div>`;
+}
+
 function renderExtraPomodoros() {
   pomodoroWidgets.querySelectorAll('.extra-pomodoro').forEach((element) => element.remove());
   extraPomodoros.forEach((pomodoro, index) => {
     const task = tasks.find((item) => item.id === pomodoro.taskId);
     const widget = document.createElement('aside');
     widget.className = `pomodoro-widget extra-pomodoro pomodoro-${pomodoro.size}${pomodoro.minimized ? ' minimized' : ''}`;
+    if (pomodoro.displayMode === 'verbose') widget.classList.add('timer-verbose');
     widget.dataset.pomodoroId = pomodoro.id;
     if (pomodoro.position && Number.isFinite(pomodoro.position.left) && Number.isFinite(pomodoro.position.top)) {
       widget.style.left = `${pomodoro.position.left}px`;
@@ -427,16 +554,65 @@ function renderExtraPomodoros() {
       widget.style.right = window.innerWidth < 768 ? '0.75rem' : '1rem';
       widget.style.bottom = `${window.innerWidth < 768 ? 260 + index * stackGap : 260 + index * stackGap}px`;
     }
-    const durationPreset = [15, 30, 45, 60, 120, 180].includes(pomodoro.duration) ? String(pomodoro.duration) : 'custom';
-    widget.innerHTML = `<div class="pomodoro-heading"><span class="pomodoro-heading-left"><button type="button" class="pomodoro-minimize" data-extra-action="minimize" aria-label="Minimizar">⌄</button><input class="pomodoro-title-input extra-title" value="${sanitizeInput(pomodoro.title || `${t('pomodoro')} ${index + 2}`)}" maxlength="40" aria-label="${t('renamePomodoro')}" /></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button type="button" class="pomodoro-close" data-extra-action="close" aria-label="Cerrar Pomodoro">×</button></span></div><strong class="pomodoro-time">${String(Math.floor(pomodoro.seconds / 60)).padStart(2, '0')}:${String(pomodoro.seconds % 60).padStart(2, '0')}</strong><button class="pomodoro-task" type="button" data-extra-action="edit-task">${task?.text || t('noPomodoroTask')}</button><div class="pomodoro-duration"><span>${t('pomodoroDurationOptions')}</span><select class="extra-duration-preset" aria-label="${t('pomodoroDurationOptions')}"><option value="15">${getPomodoroDurationLabel(15)}</option><option value="30">${getPomodoroDurationLabel(30)}</option><option value="45">${getPomodoroDurationLabel(45)}</option><option value="60">${getPomodoroDurationLabel(60)}</option><option value="120">${getPomodoroDurationLabel(120)}</option><option value="180">${getPomodoroDurationLabel(180)}</option><option value="custom">${t('pomodoroCustomDuration')}</option></select><input class="extra-duration pomodoro-custom-duration ${durationPreset === 'custom' ? '' : 'hidden'}" type="number" min="1" max="180" value="${pomodoro.duration}" aria-label="${t('pomodoroCustomDuration')}" /></div><div class="pomodoro-settings-grid"><label class="pomodoro-setting"><span>${t('pomodoroSound')}</span><select class="extra-sound" aria-label="${t('pomodoroSound')}"><option value="none">${t('noSound')}</option><option value="bell">${t('bellSound')}</option><option value="chime">${t('chimeSound')}</option><option value="pulse">${t('pulseSound')}</option></select></label><div class="pomodoro-setting"><span>${t('pomodoroSize')}</span><div class="pomodoro-size-buttons" role="group" aria-label="${t('pomodoroSize')}"><button type="button" data-extra-size="small" class="${pomodoro.size === 'small' ? 'active' : ''}">${t('smallSize')}</button><button type="button" data-extra-size="normal" class="${pomodoro.size === 'normal' ? 'active' : ''}">${t('mediumSize')}</button><button type="button" data-extra-size="large" class="${pomodoro.size === 'large' ? 'active' : ''}">${t('largeSize')}</button></div></div></div><div class="pomodoro-controls"><button type="button" data-extra-action="play" aria-label="${t('startPomodoro')}">${pomodoro.timer ? 'Ⅱ' : '▶'}</button><button type="button" data-extra-action="reset" aria-label="${t('resetPomodoro')}">↺</button></div>`;
-    const dragIndicator = document.createElement('span');
-    dragIndicator.className = 'pomodoro-drag-indicator';
-    dragIndicator.setAttribute('aria-hidden', 'true');
-    dragIndicator.textContent = '⁝⁝';
-    widget.querySelector('.pomodoro-heading-left')?.prepend(dragIndicator);
+    const durationPreset = pomodoro.durationMode || ([15, 30, 45, 60, 120, 180].includes(pomodoro.duration) ? String(pomodoro.duration) : 'custom');
+    widget.innerHTML = `<div class="pomodoro-heading"><span class="pomodoro-heading-left"><button type="button" class="pomodoro-minimize" data-extra-action="minimize" aria-label="Minimizar">⌄</button><input class="pomodoro-title-input extra-title" value="${sanitizeInput(pomodoro.title || `${t('pomodoro')} ${index + 2}`)}" maxlength="40" aria-label="${t('renamePomodoro')}" /></span><span class="pomodoro-heading-actions"><span class="pomodoro-dot" aria-hidden="true"></span><button type="button" class="pomodoro-close" data-extra-action="close" aria-label="Cerrar Pomodoro">×</button></span></div><strong class="pomodoro-time">${String(Math.floor(pomodoro.seconds / 60)).padStart(2, '0')}:${String(pomodoro.seconds % 60).padStart(2, '0')}</strong><button class="pomodoro-task" type="button" data-extra-action="edit-task">${task?.text || t('noPomodoroTask')}</button><div class="pomodoro-duration"><span>${t('pomodoroDurationOptions')}</span><select class="extra-duration-preset" aria-label="${t('pomodoroDurationOptions')}"><option value="15">${getPomodoroDurationLabel(15)}</option><option value="30">${getPomodoroDurationLabel(30)}</option><option value="45">${getPomodoroDurationLabel(45)}</option><option value="60">${getPomodoroDurationLabel(60)}</option><option value="120">${getPomodoroDurationLabel(120)}</option><option value="180">${getPomodoroDurationLabel(180)}</option><option value="custom">${t('pomodoroCustomDuration')}</option></select><input class="extra-duration pomodoro-custom-duration ${durationPreset === 'custom' ? '' : 'hidden'}" type="number" min="1" max="240" value="${pomodoro.duration}" aria-label="${t('pomodoroCustomDuration')}" /></div><div class="pomodoro-settings-grid"><label class="pomodoro-setting"><span>${t('pomodoroSound')}</span><select class="extra-sound" aria-label="${t('pomodoroSound')}"><option value="none">${t('noSound')}</option><option value="bell">${t('bellSound')}</option><option value="chime">${t('chimeSound')}</option><option value="pulse">${t('pulseSound')}</option></select></label><div class="pomodoro-setting"><span>${t('pomodoroSize')}</span><div class="pomodoro-size-buttons" role="group" aria-label="${t('pomodoroSize')}"><button type="button" data-extra-size="small" class="${pomodoro.size === 'small' ? 'active' : ''}">${t('smallSize')}</button><button type="button" data-extra-size="normal" class="${pomodoro.size === 'normal' ? 'active' : ''}">${t('mediumSize')}</button><button type="button" data-extra-size="large" class="${pomodoro.size === 'large' ? 'active' : ''}">${t('largeSize')}</button></div></div></div><div class="pomodoro-controls"><button type="button" data-extra-action="play" aria-label="${t('startPomodoro')}">${pomodoro.timer ? 'Ⅱ' : '▶'}</button><button type="button" data-extra-action="reset" aria-label="${t('resetPomodoro')}">↺</button></div>`;
+    widget.innerHTML = getPomodoroWidgetMarkup(pomodoro, index);
+    if (!widget.querySelector('.pomodoro-drag-indicator')) {
+      const dragIndicator = document.createElement('span');
+      dragIndicator.className = 'pomodoro-drag-indicator';
+      dragIndicator.setAttribute('aria-hidden', 'true');
+      dragIndicator.textContent = '⁝⁝';
+      widget.querySelector('.pomodoro-heading-left')?.prepend(dragIndicator);
+    }
+    const extraTime = widget.querySelector('.pomodoro-time');
+    extraTime.textContent = formatPomodoroTime(pomodoro.seconds, pomodoro.displayMode || 'clock');
+    const extraTask = widget.querySelector('.pomodoro-task');
+    if (extraTask) extraTask.textContent = `🔗 ${task?.text || t('noPomodoroTask')}`;
+    const clockShell = extraTime.closest('.pomodoro-clock-shell') || document.createElement('div');
+    clockShell.classList.add('pomodoro-clock-shell');
+    clockShell.style.setProperty('--pomodoro-progress', `${Math.max(0, Math.min(100, pomodoro.seconds / (pomodoro.duration * 60) * 100))}%`);
+    if (extraTime.parentNode !== clockShell) {
+      extraTime.parentNode.insertBefore(clockShell, extraTime);
+      clockShell.appendChild(extraTime);
+    }
+    const extraDurationRow = widget.querySelector('.pomodoro-duration');
+    extraDurationRow?.classList.add('pomodoro-setting');
+    const extraDurationIcon = extraDurationRow?.querySelector(':scope > span');
+    if (extraDurationIcon) {
+      extraDurationIcon.className = 'pomodoro-setting-icon';
+      extraDurationIcon.textContent = '◷';
+      extraDurationIcon.setAttribute('aria-hidden', 'true');
+    }
+    const extraSettings = widget.querySelectorAll('.pomodoro-settings-grid > *');
+    const extraSoundIcon = extraSettings[0]?.querySelector(':scope > span');
+    if (extraSoundIcon) {
+      extraSoundIcon.className = 'pomodoro-setting-icon';
+      extraSoundIcon.textContent = '♟';
+      extraSoundIcon.setAttribute('aria-hidden', 'true');
+    }
+    const extraSizeRow = extraSettings[1];
+    const extraSizeIcon = extraSizeRow?.querySelector(':scope > span');
+    if (extraSizeIcon) {
+      extraSizeIcon.className = 'pomodoro-setting-icon';
+      extraSizeIcon.textContent = '⌗';
+      extraSizeIcon.setAttribute('aria-hidden', 'true');
+    }
+    extraSizeRow?.querySelectorAll('[data-extra-size]').forEach((button, sizeIndex) => {
+      button.textContent = ['P', 'M', 'G'][sizeIndex] || button.textContent;
+    });
+    if (!widget.querySelector('[data-extra-action="settings"]')) {
+      const extraSettingsToggle = document.createElement('button');
+      extraSettingsToggle.type = 'button';
+      extraSettingsToggle.className = 'pomodoro-settings-toggle';
+      extraSettingsToggle.dataset.extraAction = 'settings';
+      extraSettingsToggle.setAttribute('aria-label', 'Mostrar u ocultar opciones');
+      extraSettingsToggle.textContent = '⚙';
+      widget.querySelector('.pomodoro-controls')?.append(extraSettingsToggle);
+    }
     widget.querySelector('.extra-duration-preset').value = durationPreset;
     widget.querySelector('.extra-sound').value = pomodoro.sound || 'none';
     widget.querySelector('.extra-title').addEventListener('change', (event) => { pomodoro.title = event.target.value.trim() || `${t('pomodoro')} ${index + 2}`; });
+    enhancePomodoroSelects(widget);
     pomodoroWidgets.append(widget);
     clampPomodoroPosition(widget);
     requestAnimationFrame(() => {
@@ -503,15 +679,16 @@ function addPomodoro() {
     return;
   }
   if (extraPomodoros.length >= 2) return;
-  extraPomodoros.push({ id: String(Date.now()), title: `${t('pomodoro')} ${extraPomodoros.length + 2}`, duration: 25, seconds: 1500, taskId: null, timer: null, size: 'normal', sound: 'none', minimized: false, position: null });
+  extraPomodoros.push({ id: String(Date.now()), title: `${t('pomodoro')} ${extraPomodoros.length + 2}`, duration: 25, durationMode: 'custom', seconds: 1500, taskId: null, timer: null, size: 'normal', sound: 'none', minimized: false, position: null });
   renderExtraPomodoros();
 }
 
 function setPomodoroDuration() {
   const value = pomodoroDurationSelect.value === 'custom'
-    ? Math.min(180, Math.max(1, Number.parseInt(pomodoroMinutes.value, 10) || 25))
+    ? Math.min(240, Math.max(1, Number.parseInt(pomodoroMinutes.value, 10) || 25))
     : Number(pomodoroDurationSelect.value);
   pomodoroDuration = value;
+  pomodoroDurationMode = pomodoroDurationSelect.value === 'custom' ? 'custom' : pomodoroDurationSelect.value;
   pomodoroSeconds = value * 60;
   window.clearInterval(pomodoroTimer);
   pomodoroTimer = null;
@@ -1547,10 +1724,25 @@ function handleSidebarListActions(event) {
 }
 
 function bindEvents() {
+  enhancePomodoroSelects(pomodoroWidget);
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.pomodoro-select-trigger, .pomodoro-select-menu')) closePomodoroDropdowns();
+  });
   focusModeToggle.addEventListener('click', () => {
     focusModeActive = !focusModeActive;
     updateFocusMode();
     renderTasks();
+  });
+  diceMenuButton.addEventListener('click', () => {
+    diceMenuPanel.classList.contains('hidden') ? openDiceMenu() : closeDiceMenu();
+  });
+  closeDiceMenuButton.addEventListener('click', closeDiceMenu);
+  diceMenuOverlay.addEventListener('click', closeDiceMenu);
+  document.querySelectorAll('.dice-menu-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      activeDiceTab = tab.dataset.diceTab;
+      renderDiceMenu();
+    });
   });
   pomodoroPlay.addEventListener('click', togglePomodoro);
   pomodoroReset.addEventListener('click', resetPomodoro);
@@ -1558,10 +1750,24 @@ function bindEvents() {
   pomodoroMinutes.addEventListener('change', setPomodoroDuration);
   pomodoroDurationSelect.addEventListener('change', () => {
     pomodoroMinutes.classList.toggle('hidden', pomodoroDurationSelect.value !== 'custom');
-    setPomodoroDuration();
+    if (pomodoroDurationSelect.value === 'custom') {
+      pomodoroDurationMode = 'custom';
+      pomodoroMinutes.value = pomodoroDuration;
+      renderPomodoro();
+    } else {
+      setPomodoroDuration();
+    }
   });
   pomodoroSound.addEventListener('change', (event) => { pomodoroSoundValue = event.target.value; });
-  pomodoroTitle.addEventListener('change', () => { pomodoroTitleValue = pomodoroTitle.value.trim() || t('pomodoro'); pomodoroTitle.value = pomodoroTitleValue; });
+  pomodoroDisplayModeButton.addEventListener('click', () => {
+    pomodoroDisplayMode = pomodoroDisplayMode === 'verbose' ? 'clock' : 'verbose';
+    renderPomodoro();
+  });
+  pomodoroSettingsToggle.addEventListener('click', () => {
+    pomodoroWidget.classList.toggle('settings-collapsed');
+    pomodoroSettingsToggle.setAttribute('aria-expanded', String(!pomodoroWidget.classList.contains('settings-collapsed')));
+  });
+  pomodoroTitle.addEventListener('change', () => { pomodoroTitleValue = pomodoroTitle.value.trim() || `${t('pomodoro')} 1`; pomodoroTitle.value = pomodoroTitleValue; });
   pomodoroWidget.querySelectorAll('[data-pomodoro-size]').forEach((button) => {
     button.addEventListener('click', () => {
       pomodoroSize = button.dataset.pomodoroSize;
@@ -1581,6 +1787,8 @@ function bindEvents() {
     const action = event.target.closest('[data-extra-action]')?.dataset.extraAction;
     if (!pomodoro || !action) return;
     if (action === 'close') { closeExtraPomodoro(pomodoro.id); return; }
+    if (action === 'display-mode') { pomodoro.displayMode = pomodoro.displayMode === 'verbose' ? 'clock' : 'verbose'; renderExtraPomodoros(); return; }
+    if (action === 'settings') { widget.classList.toggle('settings-collapsed'); return; }
     if (action === 'edit-task' && pomodoro.taskId) openTaskEditor(pomodoro.taskId);
     if (action === 'minimize') { pomodoro.minimized = !pomodoro.minimized; renderExtraPomodoros(); }
     if (action === 'reset') { window.clearInterval(pomodoro.timer); pomodoro.timer = null; pomodoro.seconds = pomodoro.duration * 60; renderExtraPomodoros(); }
@@ -1597,10 +1805,11 @@ function bindEvents() {
     if (!pomodoro) return;
     if (event.target.classList.contains('extra-duration-preset')) {
       const value = event.target.value === 'custom' ? Number(pomodoro.duration) || 25 : Number(event.target.value);
-      pomodoro.duration = Math.min(180, Math.max(1, value));
+      pomodoro.duration = Math.min(240, Math.max(1, value));
+      pomodoro.durationMode = event.target.value;
       pomodoro.seconds = pomodoro.duration * 60;
     }
-    if (event.target.classList.contains('extra-duration')) { pomodoro.duration = Math.min(180, Math.max(1, Number(event.target.value) || 25)); pomodoro.seconds = pomodoro.duration * 60; }
+    if (event.target.classList.contains('extra-duration')) { pomodoro.duration = Math.min(240, Math.max(1, Number(event.target.value) || 25)); pomodoro.durationMode = 'custom'; pomodoro.seconds = pomodoro.duration * 60; }
     if (event.target.classList.contains('extra-sound')) pomodoro.sound = event.target.value;
     renderExtraPomodoros();
   });
@@ -1736,6 +1945,7 @@ function bindEvents() {
         closeListMenus();
         priorityColorPicker.classList.add('hidden');
         closeDeleteListDialog();
+        closeDiceMenu();
         closeSettingsMenu();
         closeTaskDetail();
         sidebar?.classList.remove('open');
